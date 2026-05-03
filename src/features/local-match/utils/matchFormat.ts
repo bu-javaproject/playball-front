@@ -1,5 +1,6 @@
 ﻿import { formatDateTime } from '@/shared/utils/date';
 import { formatDistance } from '@/shared/utils/distance';
+
 import type { MatchStatus, SkillLevel, SportType } from '../types/match';
 
 export const sportLabel: Record<SportType, string> = {
@@ -26,6 +27,33 @@ export const statusLabel: Record<MatchStatus, string> = {
 export function formatEntryFee(entryFee: number) {
   if (entryFee === 0) return '무료';
   return `${entryFee.toLocaleString('ko-KR')}원`;
+}
+
+export function formatMatchDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  }).format(date);
+}
+
+export function formatMatchTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
 }
 
 export { formatDateTime, formatDistance };

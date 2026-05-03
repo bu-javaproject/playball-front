@@ -6,10 +6,15 @@
         LatLng: new (latitude: number, longitude: number) => KakaoLatLng;
         Map: new (container: HTMLElement, options: { center: KakaoLatLng; level: number }) => KakaoMap;
         Marker: new (options: { map?: KakaoMap | null; position: KakaoLatLng; title?: string }) => KakaoMarker;
-        CustomOverlay: new (options: { map?: KakaoMap | null; position: KakaoLatLng; content: HTMLElement | string; yAnchor?: number }) => KakaoOverlay;
+        CustomOverlay: new (options: {
+          map?: KakaoMap | null;
+          position: KakaoLatLng;
+          content: HTMLElement | string;
+          yAnchor?: number;
+        }) => KakaoOverlay;
         LatLngBounds: new () => KakaoLatLngBounds;
         event: {
-          addListener: (target: unknown, type: string, handler: () => void) => void;
+          addListener: (target: unknown, type: string, handler: (event: KakaoMouseEvent) => void) => void;
         };
       };
     };
@@ -18,6 +23,10 @@
   interface KakaoLatLng {
     getLat: () => number;
     getLng: () => number;
+  }
+
+  interface KakaoMouseEvent {
+    latLng: KakaoLatLng;
   }
 
   interface KakaoMap {

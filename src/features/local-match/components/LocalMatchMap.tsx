@@ -10,8 +10,11 @@ interface LocalMatchMapProps {
   matches: LocalMatch[];
   selectedMatchId: number | null;
   focusCenter?: MapCenter | null;
+  createLocation?: MapCenter | null;
+  isPickingCreateLocation?: boolean;
   onSelectMatch: (matchId: number) => void;
   onCenterChange: (center: MapCenter) => void;
+  onPickCreateLocation?: (center: MapCenter) => void;
 }
 
 function createMarkerContent(match: LocalMatch, isSelected: boolean) {
@@ -27,19 +30,38 @@ function createMarkerContent(match: LocalMatch, isSelected: boolean) {
   return content;
 }
 
+function createPendingContent() {
+  const content = document.createElement('div');
+  content.className = 'rounded-full border-2 border-play-primary bg-white px-3 py-1 text-xs font-black text-play-primary shadow-lg';
+  content.textContent = '생성 위치';
+  return content;
+}
+
 export default function LocalMatchMap({
   matches,
   selectedMatchId,
   focusCenter,
+  createLocation,
+  isPickingCreateLocation = false,
   onSelectMatch,
   onCenterChange,
+  onPickCreateLocation,
 }: LocalMatchMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<KakaoMap | null>(null);
   const markersRef = useRef<KakaoMarker[]>([]);
   const overlaysRef = useRef<KakaoOverlay[]>([]);
+  const pendingMarkerRef = useRef<KakaoMarker | null>(null);
+  const pendingOverlayRef = useRef<KakaoOverlay | null>(null);
   const hasFitInitialBoundsRef = useRef(false);
+  const isPickingCreateLocationRef = useRef(isPickingCreateLocation);
+  const onPickCreateLocationRef = useRef(onPickCreateLocation);
   const { isLoaded, error } = useKakaoMap();
+
+  useEffect(() => {
+    isPickingCreateLocationRef.current = isPickingCreateLocation;
+    onPickCreateLocationRef.current = onPickCreateLocation;
+  }, [isPickingCreateLocation, onPickCreateLocation]);
 
   useEffect(() => {
     if (!isLoaded || !containerRef.current || mapRef.current) {
@@ -55,6 +77,14 @@ export default function LocalMatchMap({
     window.kakao.maps.event.addListener(map, 'idle', () => {
       const nextCenter = map.getCenter();
       onCenterChange({ latitude: nextCenter.getLat(), longitude: nextCenter.getLng() });
+    });
+
+    window.kakao.maps.event.addListener(map, 'click', (event) => {
+      if (!isPickingCreateLocationRef.current) {
+        return;
+      }
+
+      onPickCreateLocationRef.current?.({ latitude: event.latLng.getLat(), longitude: event.latLng.getLng() });
     });
   }, [isLoaded, onCenterChange]);
 
@@ -104,6 +134,30 @@ export default function LocalMatchMap({
   }, [isLoaded, matches, onSelectMatch, selectedMatchId]);
 
   useEffect(() => {
+    if (!isLoaded || !mapRef.current) {
+      return;
+    }
+
+    pendingMarkerRef.current?.setMap(null);
+    pendingOverlayRef.current?.setMap(null);
+    pendingMarkerRef.current = null;
+    pendingOverlayRef.current = null;
+
+    if (!createLocation) {
+      return;
+    }
+
+    const position = new window.kakao.maps.LatLng(createLocation.latitude, createLocation.longitude);
+    pendingMarkerRef.current = new window.kakao.maps.Marker({ map: mapRef.current, position, title: '경기 생성 위치' });
+    pendingOverlayRef.current = new window.kakao.maps.CustomOverlay({
+      map: mapRef.current,
+      position,
+      content: createPendingContent(),
+      yAnchor: 2.9,
+    });
+  }, [createLocation, isLoaded]);
+
+  useEffect(() => {
     if (!focusCenter || !mapRef.current || !isLoaded) {
       return;
     }
@@ -114,6 +168,11 @@ export default function LocalMatchMap({
   return (
     <div className="absolute inset-0 bg-slate-100">
       <div ref={containerRef} className="h-full w-full" />
+      {isPickingCreateLocation && (
+        <div className="absolute left-4 right-4 top-24 z-20 rounded-2xl bg-play-primary px-4 py-3 text-center text-sm font-black text-white shadow-lg md:left-1/2 md:right-auto md:w-[360px] md:-translate-x-1/2">
+          지도를 눌러 경기 위치를 선택하세요
+        </div>
+      )}
       {!isLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-100 px-6 text-center">
           <div className="rounded-2xl bg-white px-5 py-4 shadow-lg">
@@ -125,5 +184,3 @@ export default function LocalMatchMap({
     </div>
   );
 }
-
-

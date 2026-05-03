@@ -1,21 +1,31 @@
 ﻿import { useCallback, useMemo, useState } from 'react';
 
 import { shouldUseLocalMatchMock } from '../api/localMatchApi';
+import ConfirmActionModal from '../components/ConfirmActionModal';
 import LocalMatchMap from '../components/LocalMatchMap';
 import MapControlButtons from '../components/MapControlButtons';
 import MatchBottomSheet from '../components/MatchBottomSheet';
 import MatchCreateModal from '../components/MatchCreateModal';
+import MatchJoinCompleteOverlay from '../components/MatchJoinCompleteOverlay';
 import { useCreateMatch } from '../hooks/useCreateMatch';
 import { useCurrentLocation } from '../hooks/useCurrentLocation';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useJoinMatch } from '../hooks/useJoinMatch';
 import { useLocalMatches } from '../hooks/useLocalMatches';
 import { useMatchDetail } from '../hooks/useMatchDetail';
-import type { LocalMatchFilters, MapCenter, MatchCreateRequest } from '../types/match';
+import type { MatchUserRelation } from '../components/MatchBottomSheet';
+import type { LocalMatch, LocalMatchFilters, MapCenter, MatchCreateRequest } from '../types/match';
 
 export default function LocalMatchPage() {
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
+  const [isPickingCreateLocation, setIsPickingCreateLocation] = useState(false);
+  const [createLocation, setCreateLocation] = useState<MapCenter | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [pendingCreatePayload, setPendingCreatePayload] = useState<MatchCreateRequest | null>(null);
+  const [pendingJoinMatchId, setPendingJoinMatchId] = useState<number | null>(null);
+  const [joinedMatch, setJoinedMatch] = useState<LocalMatch | null>(null);
+  const [createdMatchIds, setCreatedMatchIds] = useState<Set<number>>(() => new Set());
+  const [joinedMatchIds, setJoinedMatchIds] = useState<Set<number>>(() => new Set());
   const [mapCenter, setMapCenter] = useState<MapCenter | null>(null);
   const [focusCenter, setFocusCenter] = useState<MapCenter | null>(null);
   const [filters] = useState<LocalMatchFilters>({});
@@ -46,40 +56,117 @@ export default function LocalMatchPage() {
   const matches = localMatchesQuery.data?.matches ?? [];
   const selectedMatchFromList = matches.find((match) => match.matchId === selectedMatchId) ?? null;
   const selectedMatch = matchDetailQuery.data ?? selectedMatchFromList;
+  const pendingJoinMatch = pendingJoinMatchId
+    ? (matches.find((match) => match.matchId === pendingJoinMatchId) ?? selectedMatch)
+    : null;
+  const selectedMatchRelation: MatchUserRelation = selectedMatchId
+    ? createdMatchIds.has(selectedMatchId)
+      ? 'CREATED'
+      : joinedMatchIds.has(selectedMatchId)
+        ? 'JOINED'
+        : 'NONE'
+    : 'NONE';
 
   const handleCenterChange = useCallback((center: MapCenter) => {
     setMapCenter(center);
   }, []);
 
   const handleSelectMatch = useCallback((matchId: number) => {
+    if (isPickingCreateLocation) {
+      return;
+    }
+
     setSelectedMatchId(matchId);
-  }, []);
+    setJoinedMatch(null);
+  }, [isPickingCreateLocation]);
+
+  const handleStartCreateLocationPick = () => {
+    setSelectedMatchId(null);
+    setJoinedMatch(null);
+    setCreateLocation(null);
+    setPendingCreatePayload(null);
+    setIsPickingCreateLocation(true);
+    setIsCreateModalOpen(false);
+  };
+
+  const handlePickCreateLocation = (center: MapCenter) => {
+    setCreateLocation(center);
+    setFocusCenter(center);
+    setIsPickingCreateLocation(false);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+    setCreateLocation(null);
+    setPendingCreatePayload(null);
+    setIsPickingCreateLocation(false);
+  };
 
   const handleCreate = (payload: MatchCreateRequest) => {
-    createMatchMutation.mutate(payload, {
+    setPendingCreatePayload(payload);
+  };
+
+  const handleConfirmCreate = () => {
+    if (!pendingCreatePayload) {
+      return;
+    }
+
+    createMatchMutation.mutate(pendingCreatePayload, {
       onSuccess: (createdMatch) => {
+        setCreatedMatchIds((previousIds) => new Set(previousIds).add(createdMatch.matchId));
         setSelectedMatchId(createdMatch.matchId);
         setFocusCenter({ latitude: createdMatch.latitude, longitude: createdMatch.longitude });
         setIsCreateModalOpen(false);
+        setPendingCreatePayload(null);
+        setCreateLocation(null);
+        setIsPickingCreateLocation(false);
       },
       onError: (error) => {
+        setPendingCreatePayload(null);
         window.alert(error instanceof Error ? error.message : '경기 생성에 실패했습니다.');
       },
     });
   };
 
   const handleJoin = (matchId: number) => {
-    joinMatchMutation.mutate(matchId, {
+    setPendingJoinMatchId(matchId);
+  };
+
+  const handleConfirmJoin = () => {
+    if (!pendingJoinMatchId || !pendingJoinMatch) {
+      return;
+    }
+
+    joinMatchMutation.mutate(pendingJoinMatchId, {
       onSuccess: () => {
-        window.alert('참가 신청이 완료되었습니다.');
+        setJoinedMatchIds((previousIds) => new Set(previousIds).add(pendingJoinMatchId));
+        setJoinedMatch(pendingJoinMatch);
+        setPendingJoinMatchId(null);
       },
       onError: (error) => {
+        setPendingJoinMatchId(null);
         window.alert(error instanceof Error ? error.message : '참가 신청에 실패했습니다.');
       },
     });
   };
 
   const handleCloseBottomSheet = () => {
+    setSelectedMatchId(null);
+    setJoinedMatch(null);
+    setPendingJoinMatchId(null);
+  };
+
+  const handleViewJoinedDetail = () => {
+    if (joinedMatch) {
+      setSelectedMatchId(joinedMatch.matchId);
+    }
+
+    setJoinedMatch(null);
+  };
+
+  const handleCompleteHome = () => {
+    setJoinedMatch(null);
     setSelectedMatchId(null);
   };
 
@@ -97,8 +184,11 @@ export default function LocalMatchPage() {
         matches={matches}
         selectedMatchId={selectedMatchId}
         focusCenter={focusCenter ?? currentLocation}
+        createLocation={createLocation}
+        isPickingCreateLocation={isPickingCreateLocation}
         onSelectMatch={handleSelectMatch}
         onCenterChange={handleCenterChange}
+        onPickCreateLocation={handlePickCreateLocation}
       />
 
       <div className="absolute left-4 right-4 top-4 z-20">
@@ -109,31 +199,70 @@ export default function LocalMatchPage() {
         />
       </div>
 
-      {statusMessage && (
+      {statusMessage && !isPickingCreateLocation && (
         <div className="absolute left-4 top-20 z-20 rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-lg">
           {statusMessage}
         </div>
       )}
 
       <MapControlButtons
-        onCreateMatch={() => setIsCreateModalOpen(true)}
+        onCreateMatch={handleStartCreateLocationPick}
         onRefresh={() => localMatchesQuery.refetch()}
         onMoveToCurrentLocation={requestCurrentLocation}
       />
+
+      {isPickingCreateLocation && (
+        <button
+          type="button"
+          onClick={() => {
+            setIsPickingCreateLocation(false);
+            setCreateLocation(null);
+          }}
+          className="absolute bottom-8 left-5 z-20 h-12 rounded-full bg-white px-5 text-sm font-black text-slate-700 shadow-lg"
+        >
+          위치 선택 취소
+        </button>
+      )}
 
       <MatchBottomSheet
         match={selectedMatch}
         onClose={handleCloseBottomSheet}
         onJoin={handleJoin}
         isJoining={joinMatchMutation.isPending}
+        userRelation={selectedMatchRelation}
+      />
+
+      <MatchJoinCompleteOverlay
+        open={Boolean(joinedMatch)}
+        match={joinedMatch}
+        onViewDetail={handleViewJoinedDetail}
+        onHome={handleCompleteHome}
       />
 
       <MatchCreateModal
         open={isCreateModalOpen}
-        center={mapCenter}
-        onClose={() => setIsCreateModalOpen(false)}
+        center={createLocation}
+        onClose={handleCloseCreateModal}
         onCreate={handleCreate}
-        isCreating={createMatchMutation.isPending}
+        isCreating={createMatchMutation.isPending || Boolean(pendingCreatePayload)}
+      />
+
+      <ConfirmActionModal
+        open={Boolean(pendingJoinMatchId)}
+        title="참가하시겠습니까?"
+        message={pendingJoinMatch ? `${pendingJoinMatch.title} 경기에 참가 신청합니다.` : undefined}
+        onCancel={() => setPendingJoinMatchId(null)}
+        onConfirm={handleConfirmJoin}
+        isConfirming={joinMatchMutation.isPending}
+      />
+
+      <ConfirmActionModal
+        open={Boolean(pendingCreatePayload)}
+        title="경기를 생성하시겠습니까?"
+        message="지도에서 선택한 위치에 새 경기를 생성합니다."
+        onCancel={() => setPendingCreatePayload(null)}
+        onConfirm={handleConfirmCreate}
+        isConfirming={createMatchMutation.isPending}
       />
     </main>
   );
