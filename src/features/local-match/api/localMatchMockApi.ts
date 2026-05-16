@@ -36,6 +36,7 @@ function applyFilters(matches: LocalMatch[], params: LocalMatchSearchParams) {
   const radius = params.radius ?? 5;
 
   return matches
+    .filter((match) => match.status !== 'CANCELLED')
     .map((match) => ({
       ...match,
       distance: Number(
@@ -150,4 +151,42 @@ export async function joinMockMatch(matchId: number, payload: MatchJoinRequest =
     status: 'PENDING',
   };
 }
+
+export async function leaveMockMatch(matchId: number): Promise<null> {
+  await wait(250);
+
+  const match = mockLocalMatches.find((item) => item.matchId === matchId);
+
+  if (!match) {
+    throw new ApiError('존재하지 않는 경기입니다', 404, null);
+  }
+
+  mockLocalMatches = mockLocalMatches.map((item) =>
+    item.matchId === matchId
+      ? {
+          ...item,
+          currentPlayers: Math.max(0, item.currentPlayers - 1),
+          status: item.status === 'FULL' ? 'OPEN' : item.status,
+        }
+      : item,
+  );
+
+  return null;
+}
+
+export async function cancelMockMatch(matchId: number): Promise<null> {
+  await wait(250);
+
+  const match = mockLocalMatches.find((item) => item.matchId === matchId);
+
+  if (!match) {
+    throw new ApiError('존재하지 않는 경기입니다', 404, null);
+  }
+
+  mockLocalMatches = mockLocalMatches.filter((item) => item.matchId !== matchId);
+
+  return null;
+}
+
+
 

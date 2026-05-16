@@ -1,13 +1,13 @@
-﻿import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { joinMatch } from '../api/localMatchApi';
+import { leaveMatch } from '../api/localMatchApi';
 import { localMatchKeys } from './localMatchKeys';
 
-export function useJoinMatch() {
+export function useLeaveMatch() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (matchId: number) => joinMatch(matchId),
+    mutationFn: (matchId: number) => leaveMatch(matchId),
     onSuccess: (_result, matchId) => {
       queryClient.invalidateQueries({ queryKey: localMatchKeys.lists() });
       queryClient.invalidateQueries({ queryKey: localMatchKeys.detail(matchId) });

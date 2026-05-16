@@ -1,10 +1,12 @@
 ﻿import { apiClient, unwrapApiResponse } from '@/shared/api/client';
 
 import {
+  cancelMockMatch,
   createMockMatch,
   getMockLocalMatches,
   getMockMatchDetail,
   joinMockMatch,
+  leaveMockMatch,
 } from './localMatchMockApi';
 import type {
   LocalMatch,
@@ -47,4 +49,20 @@ export function joinMatch(matchId: number, payload: MatchJoinRequest = {}) {
   }
 
   return unwrapApiResponse<MatchJoinResult>(apiClient.post(`/api/matches/${matchId}/join`, payload));
+}
+
+export function leaveMatch(matchId: number) {
+  if (shouldUseLocalMatchMock) {
+    return leaveMockMatch(matchId);
+  }
+
+  return unwrapApiResponse<null>(apiClient.delete(`/api/matches/${matchId}/leave`));
+}
+
+export function cancelMatch(matchId: number) {
+  if (shouldUseLocalMatchMock) {
+    return cancelMockMatch(matchId);
+  }
+
+  return unwrapApiResponse<null>(apiClient.delete(`/api/matches/${matchId}`));
 }

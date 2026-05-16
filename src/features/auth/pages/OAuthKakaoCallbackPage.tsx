@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/app/providers/AuthContext';
 
 import { loginWithKakao } from '../api/authApi';
+import { getKakaoRedirectUri } from '../utils/kakaoAuth';
 
 export function OAuthKakaoCallbackPage() {
   const navigate = useNavigate();
@@ -18,13 +19,13 @@ export function OAuthKakaoCallbackPage() {
       return;
     }
 
-    loginWithKakao({ authorizationCode, redirectUri: `${window.location.origin}/oauth/kakao` })
+    loginWithKakao({ authorizationCode, redirectUri: getKakaoRedirectUri() })
       .then((result) => {
         login({ accessToken: result.accessToken, refreshToken: result.refreshToken });
-        navigate(result.isNewUser ? '/signup/complete' : '/', { replace: true });
+        navigate(result.isNewUser ? '/signup/complete' : '/profile', { replace: true });
       })
       .catch(() => {
-        navigate('/', { replace: true });
+        navigate('/profile', { replace: true });
       });
   }, [login, navigate]);
 

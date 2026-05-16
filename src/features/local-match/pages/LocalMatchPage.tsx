@@ -8,9 +8,11 @@ import MatchBottomSheet from '../components/MatchBottomSheet';
 import MatchCreateModal from '../components/MatchCreateModal';
 import MatchJoinCompleteOverlay from '../components/MatchJoinCompleteOverlay';
 import { useCreateMatch } from '../hooks/useCreateMatch';
+import { useCancelMatch } from '../hooks/useCancelMatch';
 import { useCurrentLocation } from '../hooks/useCurrentLocation';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useJoinMatch } from '../hooks/useJoinMatch';
+import { useLeaveMatch } from '../hooks/useLeaveMatch';
 import { useLocalMatches } from '../hooks/useLocalMatches';
 import { useMatchDetail } from '../hooks/useMatchDetail';
 import type { MatchUserRelation } from '../components/MatchBottomSheet';
@@ -23,6 +25,8 @@ export default function LocalMatchPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [pendingCreatePayload, setPendingCreatePayload] = useState<MatchCreateRequest | null>(null);
   const [pendingJoinMatchId, setPendingJoinMatchId] = useState<number | null>(null);
+  const [pendingLeaveMatchId, setPendingLeaveMatchId] = useState<number | null>(null);
+  const [pendingCancelMatchId, setPendingCancelMatchId] = useState<number | null>(null);
   const [joinedMatch, setJoinedMatch] = useState<LocalMatch | null>(null);
   const [createdMatchIds, setCreatedMatchIds] = useState<Set<number>>(() => new Set());
   const [joinedMatchIds, setJoinedMatchIds] = useState<Set<number>>(() => new Set());
@@ -33,6 +37,8 @@ export default function LocalMatchPage() {
   const { currentLocation, requestCurrentLocation } = useCurrentLocation();
   const createMatchMutation = useCreateMatch();
   const joinMatchMutation = useJoinMatch();
+  const leaveMatchMutation = useLeaveMatch();
+  const cancelMatchMutation = useCancelMatch();
   const debouncedMapCenter = useDebouncedValue(mapCenter, 400);
   const searchCenter = debouncedMapCenter ?? currentLocation;
 
@@ -53,11 +59,20 @@ export default function LocalMatchPage() {
 
   const localMatchesQuery = useLocalMatches(searchParams);
   const matchDetailQuery = useMatchDetail(selectedMatchId);
-  const matches = localMatchesQuery.data?.matches ?? [];
+  const matches = useMemo(
+    () => (localMatchesQuery.data?.matches ?? []).filter((match) => match.status !== 'CANCELLED'),
+    [localMatchesQuery.data?.matches],
+  );
   const selectedMatchFromList = matches.find((match) => match.matchId === selectedMatchId) ?? null;
   const selectedMatch = matchDetailQuery.data ?? selectedMatchFromList;
   const pendingJoinMatch = pendingJoinMatchId
     ? (matches.find((match) => match.matchId === pendingJoinMatchId) ?? selectedMatch)
+    : null;
+  const pendingLeaveMatch = pendingLeaveMatchId
+    ? (matches.find((match) => match.matchId === pendingLeaveMatchId) ?? selectedMatch)
+    : null;
+  const pendingCancelMatch = pendingCancelMatchId
+    ? (matches.find((match) => match.matchId === pendingCancelMatchId) ?? selectedMatch)
     : null;
   const selectedMatchRelation: MatchUserRelation = selectedMatchId
     ? createdMatchIds.has(selectedMatchId)
@@ -151,6 +166,64 @@ export default function LocalMatchPage() {
     });
   };
 
+  const handleLeaveJoinedMatch = (matchId: number) => {
+    setPendingLeaveMatchId(matchId);
+  };
+
+  const handleConfirmLeave = () => {
+    if (!pendingLeaveMatchId) {
+      return;
+    }
+
+    leaveMatchMutation.mutate(pendingLeaveMatchId, {
+      onSuccess: () => {
+        setJoinedMatchIds((previousIds) => {
+          const nextIds = new Set(previousIds);
+          nextIds.delete(pendingLeaveMatchId);
+          return nextIds;
+        });
+        setPendingLeaveMatchId(null);
+      },
+      onError: (error) => {
+        setPendingLeaveMatchId(null);
+        window.alert(error instanceof Error ? error.message : '참가 취소에 실패했습니다.');
+      },
+    });
+  };
+
+  const handleCancelCreatedMatch = (matchId: number) => {
+    setPendingCancelMatchId(matchId);
+  };
+
+  const handleConfirmCancelMatch = () => {
+    if (!pendingCancelMatchId) {
+      return;
+    }
+
+    const cancelledMatchId = pendingCancelMatchId;
+
+    cancelMatchMutation.mutate(cancelledMatchId, {
+      onSuccess: () => {
+        setCreatedMatchIds((previousIds) => {
+          const nextIds = new Set(previousIds);
+          nextIds.delete(cancelledMatchId);
+          return nextIds;
+        });
+        setSelectedMatchId((currentSelectedMatchId) =>
+          currentSelectedMatchId === cancelledMatchId ? null : currentSelectedMatchId,
+        );
+        setJoinedMatch((currentJoinedMatch) =>
+          currentJoinedMatch?.matchId === cancelledMatchId ? null : currentJoinedMatch,
+        );
+        setPendingCancelMatchId(null);
+      },
+      onError: (error) => {
+        setPendingCancelMatchId(null);
+        window.alert(error instanceof Error ? error.message : '경기 취소에 실패했습니다.');
+      },
+    });
+  };
+
   const handleCloseBottomSheet = () => {
     setSelectedMatchId(null);
     setJoinedMatch(null);
@@ -228,7 +301,11 @@ export default function LocalMatchPage() {
         match={selectedMatch}
         onClose={handleCloseBottomSheet}
         onJoin={handleJoin}
+        onCancelCreatedMatch={handleCancelCreatedMatch}
+        onLeaveJoinedMatch={handleLeaveJoinedMatch}
         isJoining={joinMatchMutation.isPending}
+        isCancelling={cancelMatchMutation.isPending}
+        isLeaving={leaveMatchMutation.isPending}
         userRelation={selectedMatchRelation}
       />
 
@@ -264,6 +341,27 @@ export default function LocalMatchPage() {
         onConfirm={handleConfirmCreate}
         isConfirming={createMatchMutation.isPending}
       />
+
+      <ConfirmActionModal
+        open={Boolean(pendingLeaveMatchId)}
+        title="참가 신청을 취소하시겠습니까?"
+        message={pendingLeaveMatch ? `${pendingLeaveMatch.title} 경기 참가를 취소합니다.` : undefined}
+        confirmLabel="취소하기"
+        onCancel={() => setPendingLeaveMatchId(null)}
+        onConfirm={handleConfirmLeave}
+        isConfirming={leaveMatchMutation.isPending}
+      />
+
+      <ConfirmActionModal
+        open={Boolean(pendingCancelMatchId)}
+        title="경기를 취소하시겠습니까?"
+        message={pendingCancelMatch ? `${pendingCancelMatch.title} 경기를 취소합니다.` : undefined}
+        confirmLabel="취소하기"
+        onCancel={() => setPendingCancelMatchId(null)}
+        onConfirm={handleConfirmCancelMatch}
+        isConfirming={cancelMatchMutation.isPending}
+      />
     </main>
   );
 }
+

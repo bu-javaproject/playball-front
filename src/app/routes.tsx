@@ -1,9 +1,10 @@
-﻿import { createBrowserRouter } from 'react-router-dom';
+import { Navigate, createBrowserRouter } from 'react-router-dom';
 
 import { OAuthKakaoCallbackPage } from '@/features/auth/pages/OAuthKakaoCallbackPage';
 import FriendsPage from '@/pages/FriendsPage';
 import HomePage from '@/pages/HomePage';
 import LocalMatchPage from '@/pages/LocalMatchPage';
+import MatchingPage from '@/pages/MatchingPage';
 import MatchCreatePage from '@/pages/MatchCreatePage';
 import MatchDetailPage from '@/pages/MatchDetailPage';
 import MatchEditPage from '@/pages/MatchEditPage';
@@ -22,7 +23,9 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/oauth/kakao', element: <OAuthKakaoCallbackPage /> },
+      { path: '/oauth/kakao/callback', element: <OAuthKakaoCallbackPage /> },
       { path: '/signup/complete', element: <SignupCompletePage /> },
+      { path: '/matching', element: <MatchingPage /> },
       { path: '/random-match', element: <RandomMatchPage /> },
       { path: '/matches/new', element: <MatchCreatePage /> },
       { path: '/matches/my', element: <MyMatchesPage /> },
@@ -36,7 +39,7 @@ export const router = createBrowserRouter([
     element: <MapLayout />,
     children: [
       { path: '/local-match', element: <LocalMatchPage /> },
-      { path: '/LocalMatch', element: <LocalMatchPage /> },
+      { path: '/LocalMatch', element: <Navigate to="/local-match" replace /> },
     ],
   },
   { path: '*', element: <NotFoundPage /> },

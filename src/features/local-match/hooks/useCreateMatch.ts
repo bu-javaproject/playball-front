@@ -10,6 +10,7 @@ export function useCreateMatch() {
     mutationFn: createMatch,
     onSuccess: (createdMatch) => {
       queryClient.invalidateQueries({ queryKey: localMatchKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ['my-matches'] });
       queryClient.setQueryData(localMatchKeys.detail(createdMatch.matchId), createdMatch);
     },
   });

@@ -21,7 +21,11 @@ interface MatchBottomSheetProps {
   match: LocalMatch | null;
   onClose: () => void;
   onJoin: (matchId: number) => void;
+  onCancelCreatedMatch: (matchId: number) => void;
+  onLeaveJoinedMatch: (matchId: number) => void;
   isJoining?: boolean;
+  isCancelling?: boolean;
+  isLeaving?: boolean;
   userRelation?: MatchUserRelation;
 }
 
@@ -57,7 +61,11 @@ export default function MatchBottomSheet({
   match,
   onClose,
   onJoin,
+  onCancelCreatedMatch,
+  onLeaveJoinedMatch,
   isJoining = false,
+  isCancelling = false,
+  isLeaving = false,
   userRelation = 'NONE',
 }: MatchBottomSheetProps) {
   const [snap, setSnap] = useState<BottomSheetSnap>('summary');
@@ -68,6 +76,8 @@ export default function MatchBottomSheet({
   }
 
   const canJoin = match.status === 'OPEN' && userRelation === 'NONE';
+  const canCancelCreatedMatch = userRelation === 'CREATED' && match.status !== 'CANCELLED';
+  const canLeaveJoinedMatch = userRelation === 'JOINED' && match.status !== 'CANCELLED';
 
   const handlePointerDown = (event: PointerEvent<HTMLElement>) => {
     dragStartYRef.current = event.clientY;
@@ -227,14 +237,38 @@ export default function MatchBottomSheet({
             )}
           </div>
 
-          <Button
-            type="button"
-            disabled={!canJoin || isJoining}
-            onClick={() => onJoin(match.matchId)}
-            className="mt-4 h-14 w-full shrink-0 rounded-2xl bg-play-primary text-base hover:bg-play-primary-dark"
-          >
-            {getJoinButtonLabel(match, userRelation, isJoining)}
-          </Button>
+          <div className="mt-4 shrink-0 space-y-2">
+            {canCancelCreatedMatch ? (
+              <Button
+                type="button"
+                disabled={isCancelling}
+                onClick={() => onCancelCreatedMatch(match.matchId)}
+                className="h-12 w-full rounded-2xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-100"
+              >
+                {isCancelling ? '경기 취소 중' : '경기 취소'}
+              </Button>
+            ) : null}
+
+            {canLeaveJoinedMatch ? (
+              <Button
+                type="button"
+                disabled={isLeaving}
+                onClick={() => onLeaveJoinedMatch(match.matchId)}
+                className="h-12 w-full rounded-2xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-100"
+              >
+                {isLeaving ? '참가 취소 중' : '참가 신청 취소'}
+              </Button>
+            ) : null}
+
+            <Button
+              type="button"
+              disabled={!canJoin || isJoining}
+              onClick={() => onJoin(match.matchId)}
+              className="h-14 w-full rounded-2xl bg-play-primary text-base hover:bg-play-primary-dark"
+            >
+              {getJoinButtonLabel(match, userRelation, isJoining)}
+            </Button>
+          </div>
         </div>
       )}
     </section>

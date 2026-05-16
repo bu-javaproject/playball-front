@@ -28,6 +28,13 @@ export interface LocalMatch {
   creatorNickname?: string;
   rating?: number;
   createdAt?: string;
+  participants?: MatchParticipantPreview[];
+}
+
+export interface MatchParticipantPreview {
+  memberId: number;
+  nickname: string;
+  profileImage: string | null;
 }
 
 export interface MapCenter {
