@@ -3,7 +3,7 @@ export type Gender = 'M' | 'F';
 export type RandomMatchStatus = 'FORM' | 'SEARCHING' | 'FOUND' | 'SUCCESS' | 'FAIL';
 export type RandomSkillLevel = 1 | 2 | 3 | 4 | 5;
 
-export type RandomMatchRequest = {
+export interface RandomMatchRequest {
   latitude: number;
   longitude: number;
   address: string;
@@ -14,29 +14,28 @@ export type RandomMatchRequest = {
   ageRange: number;
   skillLevel: RandomSkillLevel;
   maxFee: number;
-};
+}
 
-export type RandomMatchedGame = {
+export interface RandomMatchedGame {
   matchId: number;
   title: string;
   sportType: SportType;
   matchDate: string;
   locationName: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
+  entryFee?: number;
   maxPlayers: number;
   currentPlayers: number;
   distance: number;
-  creatorNickname: string;
-};
+  creatorNickname?: string;
+}
 
-export type RandomMatchResponse = {
-  matched: boolean;
-  match: RandomMatchedGame | null;
-};
+export type RandomMatchResponse = RandomMatchedGame;
 
-export type RandomMatchAcceptResult = {
+export interface RandomMatchAcceptResult {
   matchId: number;
-  matchTitle: string;
-  status: 'PENDING' | 'JOINED';
-};
+  currentPlayers: number;
+  maxPlayers: number;
+  status: 'PENDING' | 'JOINED' | 'APPROVED';
+}

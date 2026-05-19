@@ -1,6 +1,6 @@
 import { apiClient, unwrapApiResponse } from '@/shared/api/client';
 
-import type { RandomMatchAcceptResult, RandomMatchRequest, RandomMatchResponse } from '../types/randomMatch';
+import type { RandomMatchAcceptResult, RandomMatchedGame, RandomMatchRequest } from '../types/randomMatch';
 
 export type {
   Gender,
@@ -13,13 +13,13 @@ export type {
 } from '../types/randomMatch';
 
 export function requestRandomMatch(payload: RandomMatchRequest) {
-  return unwrapApiResponse<RandomMatchResponse>(apiClient.post('/api/matching/random', payload));
+  return unwrapApiResponse<RandomMatchedGame>(apiClient.post('/api/matches/random', payload));
 }
 
 export function acceptRandomMatch(matchId: number) {
-  return unwrapApiResponse<RandomMatchAcceptResult>(apiClient.post('/api/matching/random/accept', { matchId }));
+  return unwrapApiResponse<RandomMatchAcceptResult>(apiClient.post(`/api/matches/${matchId}/join`));
 }
 
-export function rejectRandomMatch(matchId: number) {
-  return unwrapApiResponse<null>(apiClient.post('/api/matching/random/reject', { matchId }));
+export async function rejectRandomMatch() {
+  return null;
 }

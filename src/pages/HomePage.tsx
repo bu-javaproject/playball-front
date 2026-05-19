@@ -1,64 +1,44 @@
+import { MapPin, Megaphone, Newspaper } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-type NewsItem = {
-  id: number;
-  type: string;
-  title: string;
-  date: string;
-  icon: string;
-};
+import AppHeader from '@/components/AppHeader';
 
-type RecruitItem = {
-  id: number;
-  sport: string;
-  status: '모집중' | '마감';
-  title: string;
-  location: string;
-  time: string;
-  current: number;
-  max: number;
-  color: 'blue' | 'orange';
-};
-
-const newsList: NewsItem[] = [
+const newsList = [
   {
     id: 1,
-    type: '공지사항',
-    title: '2026 봄 시즌 풋살 리그 참가 신청 시작',
+    type: '공지',
+    title: '봄 시즌 동네 리그 참가 신청이 시작됐어요',
     date: '2026.04.10',
-    icon: '🏃',
   },
   {
     id: 2,
     type: '뉴스',
-    title: '서울 목동운동장 야외 코트 리모델링 완료',
+    title: '천안 주요 야외 코트 정비가 완료됐어요',
     date: '2026.04.08',
-    icon: '🏟',
   },
 ];
 
-const recruitList: RecruitItem[] = [
+const recruitList = [
   {
     id: 1,
     sport: '축구',
-    status: '모집중',
-    title: '백석대 컴공 내기 같이 하실 분!',
-    location: '서울 목동운동장',
+    status: '모집 중',
+    title: '백석대 근처 풋살 같이 하실 분',
+    location: '천안 동남구',
     time: '오늘 오후 7시',
     current: 7,
     max: 10,
-    color: 'blue',
   },
   {
     id: 2,
     sport: '농구',
-    status: '마감',
-    title: '백석대 버스정류장 앞 3대3 농구',
+    status: '마감 임박',
+    title: '3대3 농구 한 게임 뛰실 분',
     location: '백석대 버스정류장 앞',
     time: '오늘 오후 5시',
     current: 5,
     max: 6,
-    color: 'orange',
   },
 ];
 
@@ -66,67 +46,42 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 px-4 py-4">
-      <header className="mb-5 flex h-12 items-center justify-between">
+    <div className="min-h-[calc(100vh-64px)] bg-play-surface px-4 pb-6">
+      <AppHeader showBell />
+
+      <section className="mb-6 rounded-2xl bg-play-primary p-5 text-white shadow-sm">
+        <p className="mb-2 text-xs font-black text-white/75">내 주변 경기</p>
+        <h1 className="text-2xl font-black leading-tight">
+          지금 가까운 곳에서
+          <br />
+          함께 뛸 경기를 찾아보세요
+        </h1>
+        <p className="mt-3 text-sm font-bold text-white/75">지도에서 모집 중인 경기를 바로 확인할 수 있어요.</p>
+
         <button
           type="button"
-          onClick={() => navigate('/')}
-          aria-label="메인페이지로 이동"
-          className="flex items-center gap-2"
+          onClick={() => navigate('/local-match')}
+          className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-black text-play-primary"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white">
-            PB
-          </div>
-          <span className="text-lg font-black text-blue-600">playball</span>
+          <MapPin size={17} />
+          지도에서 보기
         </button>
-
-        <div className="flex items-center gap-4 text-lg">
-          <span aria-hidden="true">🔔</span>
-          <span aria-hidden="true">⚙</span>
-        </div>
-      </header>
-
-      <section className="mb-6 flex min-h-44 justify-between rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-5 text-white shadow-lg shadow-blue-200">
-        <div>
-          <p className="mb-2 text-xs font-bold opacity-90">📍 신부동 기준</p>
-          <h1 className="text-2xl font-black leading-tight">
-            지금 주변에
-            <br />
-            경기 5개 열렸어요!
-          </h1>
-          <p className="mt-2 text-xs opacity-90">내 주변 스포츠 경기를 찾아보세요</p>
-
-          <button
-            type="button"
-            onClick={() => navigate('/local-match')}
-            className="mt-5 rounded-full bg-white px-4 py-2 text-sm font-black text-blue-600"
-          >
-            지도에서 보기 〉
-          </button>
-        </div>
-
-        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/20 text-4xl">⚽</div>
       </section>
 
       <section className="mb-6">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-black text-slate-950">공지사항 뉴스</h2>
-          <button type="button" className="text-xs font-bold text-slate-400">
-            더보기 〉
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-3">
+        <SectionTitle icon={<Newspaper size={18} />} title="공지사항 뉴스" />
+        <div className="mt-3 flex flex-col gap-3">
           {newsList.map((news) => (
-            <article key={news.id} className="flex overflow-hidden rounded-2xl bg-white shadow-sm">
-              <div className="flex w-20 items-center justify-center bg-slate-900 text-3xl">{news.icon}</div>
-
-              <div className="flex-1 p-3">
-                <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-black text-blue-600">
+            <article key={news.id} className="flex gap-3 rounded-2xl border border-play-border bg-white p-4 shadow-sm">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-play-surface text-play-primary">
+                <Megaphone size={20} />
+              </span>
+              <div className="min-w-0">
+                <span className="rounded-full bg-play-surface px-2 py-1 text-[11px] font-black text-play-primary">
                   {news.type}
                 </span>
-                <h3 className="mt-2 text-sm font-black leading-snug text-slate-950">{news.title}</h3>
-                <p className="mt-1 text-xs text-slate-400">{news.date}</p>
+                <h3 className="mt-2 text-sm font-black leading-snug text-play-ink">{news.title}</h3>
+                <p className="mt-1 text-xs font-bold text-play-muted">{news.date}</p>
               </div>
             </article>
           ))}
@@ -134,60 +89,54 @@ export default function HomePage() {
       </section>
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-black text-slate-950">모집 소개글</h2>
-          <button type="button" className="text-xs font-bold text-slate-400">
-            더보기 〉
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-3">
+        <SectionTitle title="모집 소개글" />
+        <div className="mt-3 flex flex-col gap-3">
           {recruitList.map((item) => {
             const percent = `${(item.current / item.max) * 100}%`;
 
             return (
-              <article key={item.id} className="rounded-2xl bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-black text-white ${
-                        item.color === 'blue' ? 'bg-blue-600' : 'bg-orange-500'
-                      }`}
-                    >
+              <article key={item.id} className="rounded-2xl border border-play-border bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 gap-2">
+                    <span className="rounded-full bg-play-primary px-3 py-1 text-xs font-black text-white">
                       {item.sport}
                     </span>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-black ${
-                        item.status === '마감' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-600'
-                      }`}
-                    >
+                    <span className="rounded-full bg-play-surface px-3 py-1 text-xs font-black text-play-primary">
                       {item.status}
                     </span>
                   </div>
-
-                  <span className="text-xs font-black text-slate-400">
+                  <span className="shrink-0 text-xs font-black text-play-muted">
                     {item.current}/{item.max}명
                   </span>
                 </div>
 
-                <h3 className="mt-4 text-sm font-black text-slate-950">{item.title}</h3>
-
-                <p className="mt-2 flex gap-3 text-xs text-slate-500">
-                  <span>📍 {item.location}</span>
-                  <span>{item.time}</span>
+                <h3 className="mt-4 text-sm font-black text-play-ink">{item.title}</h3>
+                <p className="mt-2 text-xs font-bold text-play-muted">
+                  {item.location} · {item.time}
                 </p>
 
-                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className={`h-full rounded-full ${item.color === 'blue' ? 'bg-blue-600' : 'bg-red-500'}`}
-                    style={{ width: percent }}
-                  />
+                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-play-surface">
+                  <div className="h-full rounded-full bg-play-primary" style={{ width: percent }} />
                 </div>
               </article>
             );
           })}
         </div>
       </section>
+    </div>
+  );
+}
+
+function SectionTitle({ icon, title }: { icon?: ReactNode; title: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {icon ? <span className="text-play-primary">{icon}</span> : null}
+        <h2 className="text-base font-black text-play-ink">{title}</h2>
+      </div>
+      <button type="button" className="text-xs font-black text-play-muted">
+        더보기
+      </button>
     </div>
   );
 }

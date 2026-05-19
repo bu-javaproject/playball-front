@@ -8,27 +8,27 @@ export const sportLabel: Record<SportType, string> = {
 };
 
 export const sportIcon: Record<SportType, string> = {
-  SOCCER: '⚽',
-  BASKETBALL: '🏀',
-  RUNNING: '🏃',
-  BADMINTON: '🏸',
+  SOCCER: '축구',
+  BASKETBALL: '농구',
+  RUNNING: '러닝',
+  BADMINTON: '배드민턴',
 };
 
 export const statusLabel: Record<MatchStatus, string> = {
-  OPEN: '모집중',
+  OPEN: '모집 중',
   FULL: '마감',
-  IN_PROGRESS: '진행중',
+  IN_PROGRESS: '진행 중',
   COMPLETED: '완료',
   CANCELLED: '취소',
   CLOSED: '종료',
 };
 
 export const complimentTagLabel: Record<ComplimentTag, string> = {
-  MANNERS: '매너 좋아요',
-  SKILL: '실력 좋아요',
-  PUNCTUAL: '시간 약속',
-  PASSIONATE: '열정적',
-  MOOD_MAKER: '분위기 메이커',
+  MANNERS: '매너가 좋아요',
+  SKILL: '실력이 좋아요',
+  PUNCTUAL: '시간 약속을 잘 지켜요',
+  PASSIONATE: '열정적이에요',
+  MOOD_MAKER: '분위기를 살려요',
 };
 
 export const skillLabel = {

@@ -24,7 +24,10 @@ export function getLocalMatches(params: LocalMatchSearchParams) {
     return getMockLocalMatches(params);
   }
 
-  return unwrapApiResponse<LocalMatchSearchResult>(apiClient.get('/api/matching/local', { params }));
+  return unwrapApiResponse<LocalMatch[]>(apiClient.get('/api/matches', { params })).then((matches) => ({
+    totalCount: matches.length,
+    matches,
+  }) satisfies LocalMatchSearchResult);
 }
 
 export function getMatchDetail(matchId: number) {
@@ -56,7 +59,7 @@ export function leaveMatch(matchId: number) {
     return leaveMockMatch(matchId);
   }
 
-  return unwrapApiResponse<null>(apiClient.delete(`/api/matches/${matchId}/leave`));
+  return unwrapApiResponse<null>(apiClient.delete(`/api/matches/${matchId}/join`));
 }
 
 export function cancelMatch(matchId: number) {

@@ -14,14 +14,14 @@ export default function RandomMatchStatusCard({
   children,
 }: RandomMatchStatusCardProps) {
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-md items-center">
-      <section className="w-full rounded-3xl bg-white p-8 text-center shadow-lg shadow-slate-200">
-        <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-blue-50 text-lg font-black text-blue-600">
+    <main className="mx-auto flex min-h-[calc(100vh-156px)] w-full max-w-md items-center">
+      <section className="w-full rounded-2xl border border-play-border bg-white p-7 text-center shadow-sm">
+        <div className="mx-auto mb-6 grid h-20 w-20 place-items-center rounded-full bg-play-surface text-base font-black text-play-primary">
           {icon}
         </div>
 
-        <h1 className="text-2xl font-black text-slate-950">{title}</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-500">{description}</p>
+        <h2 className="text-2xl font-black text-play-ink">{title}</h2>
+        <p className="mt-3 text-sm font-bold leading-6 text-play-muted">{description}</p>
 
         {children}
       </section>

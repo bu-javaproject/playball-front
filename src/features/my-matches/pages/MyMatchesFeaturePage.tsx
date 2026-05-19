@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Trophy } from 'lucide-react';
 
+import AppHeader from '@/components/AppHeader';
+
 import { MatchDetailSheet } from '../components/MatchDetailSheet';
 import { MyMatchCard } from '../components/MyMatchCard';
 import { ParticipantSheet } from '../components/ParticipantSheet';
@@ -53,9 +55,7 @@ export function MyMatchesFeaturePage() {
   }
 
   function confirmLeaveOrCancel() {
-    if (!pendingLeaveAction) {
-      return;
-    }
+    if (!pendingLeaveAction) return;
 
     leaveOrCancelMutation.mutate(
       { matchId: pendingLeaveAction.matchId, isCreator: pendingLeaveAction.isCreator },
@@ -68,9 +68,7 @@ export function MyMatchesFeaturePage() {
   }
 
   function submitPraise(tags: ComplimentTag[], comment: string) {
-    if (!selectedParticipant) {
-      return;
-    }
+    if (!selectedParticipant) return;
 
     complimentMutation.mutate(
       {
@@ -92,16 +90,13 @@ export function MyMatchesFeaturePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 pb-8 pt-6">
-      <header className="mb-6">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-blue-600">PlayBall</p>
-        <h1 className="mt-1 text-3xl font-black text-slate-950">내 경기</h1>
-      </header>
+    <div className="min-h-screen bg-play-surface px-4 pb-8">
+      <AppHeader title="내 경기" subtitle="참여 중인 경기와 지난 기록을 확인하세요" />
 
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Trophy className="text-blue-600" size={20} />
-          <h2 className="text-lg font-black text-slate-950">현재 잡힌 경기</h2>
+          <Trophy className="text-play-primary" size={20} />
+          <h2 className="text-lg font-black text-play-ink">예정된 경기</h2>
         </div>
 
         {myMatchesQuery.isLoading ? (
@@ -118,15 +113,15 @@ export function MyMatchesFeaturePage() {
             />
           ))
         ) : (
-          <EmptyCard message="아직 잡힌 경기가 없습니다." />
+          <EmptyCard message="아직 예정된 경기가 없습니다." />
         )}
       </section>
 
       <section className="mt-8 space-y-3">
-        <h2 className="text-lg font-black text-slate-950">지난 경기</h2>
+        <h2 className="text-lg font-black text-play-ink">지난 경기</h2>
 
         {historyQuery.isLoading ? (
-          <LoadingCard message="경기 기록을 불러오는 중입니다." />
+          <LoadingCard message="지난 경기 기록을 불러오는 중입니다." />
         ) : pastMatches.length > 0 ? (
           pastMatches.map((match) => (
             <PastMatchItem
@@ -189,45 +184,46 @@ export function MyMatchesFeaturePage() {
   );
 }
 
-interface MessageCardProps {
-  message: string;
+function LoadingCard({ message }: { message: string }) {
+  return <div className="rounded-2xl border border-play-border bg-white p-5 text-sm font-bold text-play-muted shadow-sm">{message}</div>;
 }
 
-function LoadingCard({ message }: MessageCardProps) {
-  return <div className="rounded-2xl bg-white p-5 text-sm font-bold text-slate-500 shadow-sm">{message}</div>;
+function EmptyCard({ message }: { message: string }) {
+  return <div className="rounded-2xl border border-dashed border-play-border bg-white p-5 text-sm font-bold text-play-muted">{message}</div>;
 }
 
-function EmptyCard({ message }: MessageCardProps) {
-  return <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-sm font-bold text-slate-500">{message}</div>;
-}
-
-interface LeaveOrCancelConfirmModalProps {
+function LeaveOrCancelConfirmModal({
+  match,
+  isSubmitting,
+  onClose,
+  onConfirm,
+}: {
   match: MyMatchSummary;
   isSubmitting: boolean;
   onClose: () => void;
   onConfirm: () => void;
-}
-
-function LeaveOrCancelConfirmModal({ match, isSubmitting, onClose, onConfirm }: LeaveOrCancelConfirmModalProps) {
-  const title = match.isCreator ? '경기를 취소하시겠습니까?' : '경기에 불참하시겠습니까?';
-  const description = match.isCreator ? '참가자에게 경기 취소 알림이 전달됩니다.' : '참가 취소 후 다시 신청이 필요할 수 있습니다.';
+}) {
+  const title = match.isCreator ? '경기를 취소할까요?' : '경기 참가를 취소할까요?';
+  const description = match.isCreator
+    ? '참가자에게 경기 취소 알림이 전달됩니다.'
+    : '참가 취소 후 다시 참가 신청할 수 있습니다.';
 
   return (
     <div className="fixed inset-0 z-[95] grid place-items-center bg-slate-950/45 px-5">
-      <section className="w-full max-w-sm rounded-[26px] bg-white p-5 shadow-2xl">
-        <h3 className="text-xl font-black text-slate-950">{title}</h3>
-        <p className="mt-2 text-sm font-bold leading-6 text-slate-500">{description}</p>
+      <section className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+        <h3 className="text-xl font-black text-play-ink">{title}</h3>
+        <p className="mt-2 text-sm font-bold leading-6 text-play-muted">{description}</p>
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <button type="button" onClick={onClose} className="h-12 rounded-2xl bg-slate-100 text-sm font-black text-slate-600">
-            아니오
+          <button type="button" onClick={onClose} className="h-12 rounded-xl bg-play-surface text-sm font-black text-play-muted">
+            아니요
           </button>
           <button
             type="button"
             disabled={isSubmitting}
             onClick={onConfirm}
-            className="h-12 rounded-2xl bg-red-500 text-sm font-black text-white disabled:bg-slate-200 disabled:text-slate-400"
+            className="h-12 rounded-xl bg-red-500 text-sm font-black text-white disabled:bg-slate-200 disabled:text-slate-400"
           >
-            네
+            확인
           </button>
         </div>
       </section>

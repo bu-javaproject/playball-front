@@ -13,7 +13,7 @@ export default function OptionGroup<T extends string | number>({
 }: OptionGroupProps<T>) {
   return (
     <section className="mt-5">
-      <h2 className="mb-3 text-sm font-black text-slate-500">{title}</h2>
+      <h2 className="mb-3 text-sm font-black text-play-muted">{title}</h2>
 
       <div className="grid grid-cols-2 gap-2">
         {options.map((option) => {
@@ -24,10 +24,10 @@ export default function OptionGroup<T extends string | number>({
               key={String(option.value)}
               type="button"
               onClick={() => onChange(option.value)}
-              className={`h-11 rounded-2xl border text-sm font-black transition ${
+              className={`h-11 rounded-xl border text-sm font-black transition ${
                 active
-                  ? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-200'
-                  : 'border-slatㄹe-200 bg-slate-50 text-slate-500'
+                  ? 'border-play-primary bg-play-primary text-white shadow-sm'
+                  : 'border-play-border bg-play-surface text-play-muted hover:border-play-primary/40'
               }`}
             >
               {option.label}

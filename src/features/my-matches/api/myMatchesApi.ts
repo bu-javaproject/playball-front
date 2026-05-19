@@ -1,10 +1,10 @@
 import { apiClient, unwrapApiResponse } from '@/shared/api/client';
 
 import {
-  createMockCompliments,
   cancelMockMatch,
-  getMockMatchHistory,
+  createMockCompliments,
   getMockMatchDetail,
+  getMockMatchHistory,
   getMockMatchParticipants,
   getMockMemberProfile,
   getMockMyMatches,
@@ -14,10 +14,13 @@ import type {
   ComplimentBulkRequest,
   ComplimentBulkResult,
   MatchDetail,
+  MatchDetailParticipant,
   MatchHistoryResponse,
   MatchParticipantsResponse,
+  MatchStatus,
   MyMatchRole,
   MyMatchesResponse,
+  MyMatchSummary,
   PublicMemberProfile,
 } from '../types/myMatch';
 
@@ -35,20 +38,101 @@ export interface MyMatchHistoryParams {
   size?: number;
 }
 
-export function getMyMatches(params: MyMatchesParams = {}) {
+interface BackendMatchSummary {
+  matchId: number;
+  title: string;
+  sportType: MyMatchSummary['sportType'];
+  matchDate: string;
+  locationName: string;
+  maxPlayers: number;
+  currentPlayers: number;
+  status: MatchStatus;
+}
+
+interface BackendMatchDetail {
+  match: Omit<MatchDetail, 'creatorId' | 'creatorNickname' | 'participants'> & {
+    gender?: string;
+    ageRange?: number;
+  };
+  joinedMembers: Array<MatchDetailParticipant & {
+    gender?: string;
+    age?: number;
+    skillLevel?: string;
+    preferredPosition?: string;
+  }>;
+}
+
+function toPagedMatches(matches: BackendMatchSummary[]): MyMatchesResponse {
+  return {
+    content: matches.map((match) => ({
+      ...match,
+      isCreator: false,
+      playerPreview: [],
+    })),
+    totalElements: matches.length,
+    hasNext: false,
+  };
+}
+
+function toMatchDetail(response: BackendMatchDetail): MatchDetail {
+  return {
+    ...response.match,
+    creatorId: 0,
+    creatorNickname: '주최자',
+    participants: response.joinedMembers,
+  };
+}
+
+function toParticipants(response: BackendMatchDetail): MatchParticipantsResponse {
+  return {
+    matchId: response.match.matchId,
+    title: response.match.title,
+    matchDate: response.match.matchDate,
+    maxPlayers: response.match.maxPlayers,
+    currentPlayers: response.match.currentPlayers,
+    participants: response.joinedMembers.map((member, index) => ({
+      participantId: member.memberId ?? index,
+      memberId: member.memberId,
+      nickname: member.nickname,
+      profileImage: member.profileImage,
+      status: 'JOINED',
+    })),
+    waitingList: [],
+  };
+}
+
+export function getMyMatches(_params: MyMatchesParams = {}) {
   if (shouldUseMyMatchesMock) {
     return getMockMyMatches();
   }
 
-  return unwrapApiResponse<MyMatchesResponse>(apiClient.get('/api/matches/my', { params }));
+  return unwrapApiResponse<BackendMatchSummary[]>(apiClient.get('/api/members/me/matches')).then(toPagedMatches);
 }
 
-export function getMyMatchHistory(params: MyMatchHistoryParams = {}) {
+export function getMyMatchHistory(_params: MyMatchHistoryParams = {}) {
   if (shouldUseMyMatchesMock) {
     return getMockMatchHistory();
   }
 
-  return unwrapApiResponse<MatchHistoryResponse>(apiClient.get('/api/members/me/history', { params }));
+  return unwrapApiResponse<BackendMatchSummary[]>(apiClient.get('/api/members/me/matches')).then((matches) => {
+    const finishedMatches = matches.filter((match) => ['COMPLETED', 'CANCELLED', 'CLOSED'].includes(match.status));
+
+    return {
+      content: finishedMatches.map((match) => ({
+        matchId: match.matchId,
+        title: match.title,
+        sportType: match.sportType,
+        matchDate: match.matchDate,
+        locationName: match.locationName,
+        result: match.status,
+        myRole: 'PLAYER',
+        rated: false,
+      })),
+      totalElements: finishedMatches.length,
+      totalPages: 1,
+      hasNext: false,
+    } satisfies MatchHistoryResponse;
+  });
 }
 
 export function getMatchParticipants(matchId: number) {
@@ -56,7 +140,7 @@ export function getMatchParticipants(matchId: number) {
     return getMockMatchParticipants(matchId);
   }
 
-  return unwrapApiResponse<MatchParticipantsResponse>(apiClient.get(`/api/matches/${matchId}/participants`));
+  return unwrapApiResponse<BackendMatchDetail>(apiClient.get(`/api/matches/${matchId}`)).then(toParticipants);
 }
 
 export function getMatchDetail(matchId: number) {
@@ -64,7 +148,7 @@ export function getMatchDetail(matchId: number) {
     return getMockMatchDetail(matchId);
   }
 
-  return unwrapApiResponse<MatchDetail>(apiClient.get(`/api/matches/${matchId}`));
+  return unwrapApiResponse<BackendMatchDetail>(apiClient.get(`/api/matches/${matchId}`)).then(toMatchDetail);
 }
 
 export function getMemberProfile(memberId: number) {
@@ -96,5 +180,5 @@ export function leaveMatch(matchId: number) {
     return leaveMockMatch();
   }
 
-  return unwrapApiResponse<null>(apiClient.delete(`/api/matches/${matchId}/leave`));
+  return unwrapApiResponse<null>(apiClient.delete(`/api/matches/${matchId}/join`));
 }

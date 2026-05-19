@@ -13,24 +13,24 @@ interface ParticipantSheetProps {
 export function ParticipantSheet({ match, isLoading, onClose, onOpenProfile }: ParticipantSheetProps) {
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/35 px-3">
-      <section className="max-h-[82vh] w-full max-w-screen-sm overflow-y-auto rounded-t-[28px] bg-white pb-6 shadow-2xl">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur">
+      <section className="max-h-[82vh] w-full max-w-screen-sm overflow-y-auto rounded-t-2xl bg-white pb-6 shadow-2xl">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-play-border bg-white/95 px-5 py-4 backdrop-blur">
           <div>
-            <h2 className="text-xl font-black text-slate-950">참가자 목록</h2>
-            <p className="text-xs font-bold text-slate-400">내 경기</p>
+            <h2 className="text-xl font-black text-play-ink">참가자 목록</h2>
+            <p className="text-xs font-bold text-play-muted">함께 뛰는 멤버를 확인하세요</p>
           </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full bg-slate-100">
+          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full bg-play-surface">
             <X size={20} />
           </button>
         </header>
 
         {isLoading ? (
-          <div className="p-6 text-sm font-bold text-slate-500">참가자 정보를 불러오는 중입니다.</div>
+          <div className="p-6 text-sm font-bold text-play-muted">참가자 정보를 불러오는 중입니다.</div>
         ) : match ? (
           <div className="space-y-6 px-5 py-5">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <h3 className="text-base font-black text-slate-950">{match.title}</h3>
-              <p className="mt-1 text-sm font-bold text-slate-500">
+            <div className="rounded-xl border border-play-border bg-play-surface p-4">
+              <h3 className="text-base font-black text-play-ink">{match.title}</h3>
+              <p className="mt-1 text-sm font-bold text-play-muted">
                 {formatMatchDateTime(match.matchDate)} · {match.currentPlayers}/{match.maxPlayers}명
               </p>
             </div>
@@ -42,24 +42,27 @@ export function ParticipantSheet({ match, isLoading, onClose, onOpenProfile }: P
             ) : null}
           </div>
         ) : (
-          <div className="p-6 text-sm font-bold text-slate-500">참가자 정보를 찾을 수 없습니다.</div>
+          <div className="p-6 text-sm font-bold text-play-muted">참가자 정보를 찾을 수 없습니다.</div>
         )}
       </section>
     </div>
   );
 }
 
-interface ParticipantGridProps {
+function ParticipantGrid({
+  title,
+  participants,
+  muted = false,
+  onOpenProfile,
+}: {
   title: string;
   participants: MatchParticipant[];
   muted?: boolean;
   onOpenProfile: (participant: MatchParticipant) => void;
-}
-
-function ParticipantGrid({ title, participants, muted = false, onOpenProfile }: ParticipantGridProps) {
+}) {
   return (
     <div>
-      <h3 className="mb-3 text-sm font-black text-slate-700">{title}</h3>
+      <h3 className="mb-3 text-sm font-black text-play-ink">{title}</h3>
       <div className="grid grid-cols-4 gap-4">
         {participants.map((participant) => (
           <button
@@ -70,7 +73,7 @@ function ParticipantGrid({ title, participants, muted = false, onOpenProfile }: 
           >
             <span
               className={`grid h-16 w-16 place-items-center rounded-full text-xl font-black text-white shadow-sm ${
-                muted ? 'bg-slate-300' : 'bg-blue-500'
+                muted ? 'bg-slate-300' : 'bg-play-primary'
               }`}
             >
               {participant.profileImage ? (
@@ -79,7 +82,7 @@ function ParticipantGrid({ title, participants, muted = false, onOpenProfile }: 
                 getInitial(participant.nickname)
               )}
             </span>
-            <span className="w-full truncate text-center text-xs font-black text-slate-700">{participant.nickname}</span>
+            <span className="w-full truncate text-center text-xs font-black text-play-ink">{participant.nickname}</span>
           </button>
         ))}
       </div>

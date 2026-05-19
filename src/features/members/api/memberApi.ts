@@ -18,5 +18,5 @@ export function updateMyProfile(payload: ProfileEditRequest) {
     return updateMockMyProfile(payload);
   }
 
-  return unwrapApiResponse<MyProfile>(apiClient.put('/api/members/me/edit', payload));
+  return unwrapApiResponse<MyProfile>(apiClient.patch('/api/members/me', payload));
 }

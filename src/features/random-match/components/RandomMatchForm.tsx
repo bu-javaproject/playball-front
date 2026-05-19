@@ -10,15 +10,10 @@ type RandomMatchFormProps = {
 export default function RandomMatchForm({ form, onChange, onSubmit }: RandomMatchFormProps) {
   return (
     <main className="mx-auto w-full max-w-md">
-      <section className="mb-5">
-        <h1 className="text-2xl font-black text-slate-950">랜덤 매칭</h1>
-        <p className="mt-2 text-sm font-bold text-slate-500">원하는 조건을 선택하면 알맞은 경기를 찾아드려요</p>
-      </section>
-
-      <section className="rounded-3xl bg-white p-5 shadow-lg shadow-slate-200">
+      <section className="rounded-2xl border border-play-border bg-white p-5 shadow-sm">
         <div className="mb-5 grid grid-cols-2 gap-3">
           <label className="col-span-2 flex flex-col gap-2">
-            <span className="text-sm font-black text-slate-500">위치</span>
+            <span className="text-sm font-black text-play-muted">위치</span>
             <input
               value={form.address}
               onChange={(event) => onChange('address', event.target.value)}
@@ -28,7 +23,7 @@ export default function RandomMatchForm({ form, onChange, onSubmit }: RandomMatc
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-black text-slate-500">날짜</span>
+            <span className="text-sm font-black text-play-muted">날짜</span>
             <input
               type="date"
               value={form.date}
@@ -38,7 +33,7 @@ export default function RandomMatchForm({ form, onChange, onSubmit }: RandomMatc
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-black text-slate-500">포지션</span>
+            <span className="text-sm font-black text-play-muted">포지션</span>
             <input
               value={form.preferredPosition}
               onChange={(event) => onChange('preferredPosition', event.target.value)}
@@ -77,7 +72,7 @@ export default function RandomMatchForm({ form, onChange, onSubmit }: RandomMatc
             { label: '10대', value: 10 },
             { label: '20대', value: 20 },
             { label: '30대', value: 30 },
-            { label: '40대+', value: 40 },
+            { label: '40대 이상', value: 40 },
           ]}
           onChange={(value) => onChange('ageRange', value)}
         />
@@ -86,11 +81,11 @@ export default function RandomMatchForm({ form, onChange, onSubmit }: RandomMatc
           title="실력"
           value={form.skillLevel}
           options={[
-            { label: '초보자', value: 1 },
-            { label: '아마추어', value: 2 },
-            { label: '중급자', value: 3 },
-            { label: '고수', value: 4 },
-            { label: '프로', value: 5 },
+            { label: '입문', value: 1 },
+            { label: '초급', value: 2 },
+            { label: '중급', value: 3 },
+            { label: '고급', value: 4 },
+            { label: '상급', value: 5 },
           ]}
           onChange={(value) => onChange('skillLevel', value)}
         />
@@ -110,7 +105,7 @@ export default function RandomMatchForm({ form, onChange, onSubmit }: RandomMatc
         <button
           type="button"
           onClick={onSubmit}
-          className="mt-6 h-13 w-full rounded-2xl bg-blue-600 text-base font-black text-white shadow-lg shadow-blue-200"
+          className="mt-6 h-12 w-full rounded-xl bg-play-primary text-base font-black text-white shadow-sm transition hover:bg-play-primary-dark"
         >
           매칭 시작하기
         </button>

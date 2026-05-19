@@ -34,14 +34,8 @@ export function useRandomMatchFlow() {
 
     try {
       const result = await requestRandomMatch(form);
-
-      if (result.matched && result.match) {
-        setMatchedGame(result.match);
-        setStatus('FOUND');
-        return;
-      }
-
-      setStatus('FAIL');
+      setMatchedGame(result);
+      setStatus('FOUND');
     } catch {
       setStatus('FAIL');
     }
@@ -63,10 +57,10 @@ export function useRandomMatchFlow() {
     if (!matchedGame) return;
 
     try {
-      await rejectRandomMatch(matchedGame.matchId);
+      await rejectRandomMatch();
       setStatus('FAIL');
     } catch {
-      window.alert('매칭 거절에 실패했습니다.');
+      window.alert('매칭 거절 처리에 실패했습니다.');
     }
   };
 
