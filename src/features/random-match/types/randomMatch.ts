@@ -38,5 +38,5 @@ export interface RandomMatchAcceptResult {
   matchId: number;
   currentPlayers: number;
   maxPlayers: number;
-  status: 'PENDING' | 'JOINED' | 'APPROVED';
+  status: 'APPROVED';
 }

@@ -16,7 +16,16 @@ import { useLeaveMatch } from '../hooks/useLeaveMatch';
 import { useLocalMatches } from '../hooks/useLocalMatches';
 import { useMatchDetail } from '../hooks/useMatchDetail';
 import type { MatchUserRelation } from '../components/MatchBottomSheet';
-import type { LocalMatch, LocalMatchFilters, MapCenter, MatchCreateRequest } from '../types/match';
+import type { LocalMatch, LocalMatchFilters, MapCenter, MatchCreateRequest, SportType } from '../types/match';
+import { sportLabel } from '../utils/matchFormat';
+
+const sportFilterOptions: Array<{ label: string; value: SportType | null }> = [
+  { label: '전체', value: null },
+  { label: sportLabel.SOCCER, value: 'SOCCER' },
+  { label: sportLabel.BASKETBALL, value: 'BASKETBALL' },
+  { label: sportLabel.RUNNING, value: 'RUNNING' },
+  { label: sportLabel.BADMINTON, value: 'BADMINTON' },
+];
 
 export default function LocalMatchPage() {
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
@@ -32,7 +41,7 @@ export default function LocalMatchPage() {
   const [joinedMatchIds, setJoinedMatchIds] = useState<Set<number>>(() => new Set());
   const [mapCenter, setMapCenter] = useState<MapCenter | null>(null);
   const [focusCenter, setFocusCenter] = useState<MapCenter | null>(null);
-  const [filters] = useState<LocalMatchFilters>({});
+  const [filters, setFilters] = useState<LocalMatchFilters>({});
 
   const { currentLocation, requestCurrentLocation } = useCurrentLocation();
   const createMatchMutation = useCreateMatch();
@@ -78,13 +87,17 @@ export default function LocalMatchPage() {
     ? createdMatchIds.has(selectedMatchId)
       ? 'CREATED'
       : joinedMatchIds.has(selectedMatchId)
-        ? 'JOINED'
+        ? 'APPROVED'
         : 'NONE'
     : 'NONE';
 
   const handleCenterChange = useCallback((center: MapCenter) => {
     setMapCenter(center);
   }, []);
+
+  const handleSportFilterChange = (sportType: SportType | null) => {
+    setFilters(sportType ? { sportType } : {});
+  };
 
   const handleSelectMatch = useCallback((matchId: number) => {
     if (isPickingCreateLocation) {
@@ -267,13 +280,33 @@ export default function LocalMatchPage() {
       <div className="absolute left-4 right-4 top-4 z-20">
         <input
           type="search"
-          placeholder="장소나 종목을 검색하세요"
+          readOnly
+          placeholder="지도를 움직이거나 종목을 선택하세요"
           className="h-14 w-full rounded-2xl border border-white/80 bg-white px-4 text-sm font-bold text-slate-900 shadow-lg outline-none placeholder:text-slate-400"
         />
       </div>
 
+      <div className="absolute left-4 right-4 top-20 z-20 flex gap-2 overflow-x-auto pb-1">
+        {sportFilterOptions.map((option) => {
+          const isSelected = filters.sportType === option.value || (!filters.sportType && option.value === null);
+
+          return (
+            <button
+              key={option.value ?? 'ALL'}
+              type="button"
+              onClick={() => handleSportFilterChange(option.value)}
+              className={`h-9 shrink-0 rounded-full px-4 text-xs font-black shadow-lg ${
+                isSelected ? 'bg-play-primary text-white' : 'bg-white text-slate-700'
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+
       {statusMessage && !isPickingCreateLocation && (
-        <div className="absolute left-4 top-20 z-20 rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-lg">
+        <div className="absolute left-4 top-[124px] z-20 rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-lg">
           {statusMessage}
         </div>
       )}

@@ -107,10 +107,10 @@ export async function getMockMatchParticipants(matchId: number): Promise<MatchPa
     maxPlayers: matchId === 102 ? 6 : 10,
     currentPlayers: matchId === 102 ? 5 : 7,
     participants: [
-      { participantId: 1, memberId: 201, nickname: '박지성', profileImage: null, status: 'JOINED' },
-      { participantId: 2, memberId: 202, nickname: '이강인', profileImage: null, status: 'JOINED' },
-      { participantId: 3, memberId: 203, nickname: '손흥민', profileImage: null, status: 'JOINED' },
-      { participantId: 4, memberId: 204, nickname: '황희찬', profileImage: null, status: 'JOINED' },
+      { participantId: 1, memberId: 201, nickname: '박지성', profileImage: null, status: 'APPROVED' },
+      { participantId: 2, memberId: 202, nickname: '이강인', profileImage: null, status: 'APPROVED' },
+      { participantId: 3, memberId: 203, nickname: '손흥민', profileImage: null, status: 'APPROVED' },
+      { participantId: 4, memberId: 204, nickname: '황희찬', profileImage: null, status: 'APPROVED' },
     ],
     waitingList:
       matchId === 101

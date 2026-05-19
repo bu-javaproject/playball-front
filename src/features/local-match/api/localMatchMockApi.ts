@@ -45,18 +45,6 @@ function applyFilters(matches: LocalMatch[], params: LocalMatchSearchParams) {
     }))
     .filter((match) => match.distance === undefined || match.distance <= radius)
     .filter((match) => !params.sportType || match.sportType === params.sportType)
-    .filter((match) => !params.skillLevel || match.skillLevel === params.skillLevel)
-    .filter((match) => {
-      if (!params.feeType || params.feeType === 'ANY') {
-        return true;
-      }
-
-      if (params.feeType === 'FREE') {
-        return match.entryFee === 0;
-      }
-
-      return match.entryFee <= 10000;
-    })
     .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
 }
 
@@ -135,7 +123,7 @@ export async function joinMockMatch(matchId: number, payload: MatchJoinRequest =
       ? {
           ...item,
           currentPlayers: item.currentPlayers + 1,
-          status: item.currentPlayers + 1 >= item.maxPlayers ? 'FULL' : item.status,
+          status: item.currentPlayers + 1 >= item.maxPlayers ? 'CLOSED' : item.status,
         }
       : item,
   );
@@ -148,7 +136,7 @@ export async function joinMockMatch(matchId: number, payload: MatchJoinRequest =
     matchTitle: match.title,
     matchDate: match.matchDate,
     locationName: match.locationName,
-    status: 'PENDING',
+    status: 'APPROVED',
   };
 }
 
@@ -166,7 +154,7 @@ export async function leaveMockMatch(matchId: number): Promise<null> {
       ? {
           ...item,
           currentPlayers: Math.max(0, item.currentPlayers - 1),
-          status: item.status === 'FULL' ? 'OPEN' : item.status,
+          status: item.status === 'CLOSED' ? 'OPEN' : item.status,
         }
       : item,
   );

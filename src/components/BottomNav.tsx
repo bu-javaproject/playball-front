@@ -4,13 +4,13 @@ const navItems = [
   { to: '/', label: '홈', icon: '⌂' },
   { to: '/matches/my', label: '내 경기', icon: '♜' },
   { to: '/matching', label: '매칭', icon: '⌘' },
-  { to: '/friends', label: '친구', icon: '♧' },
+  //{ to: '/friends', label: '친구', icon: '♧' },
   { to: '/profile', label: '프로필', icon: '♙' },
 ];
 
 export default function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-1/2 z-50 grid h-16 w-full max-w-screen-sm -translate-x-1/2 grid-cols-5 border-t border-slate-200 bg-white">
+    <nav className="fixed bottom-0 left-1/2 z-50 grid h-16 w-full max-w-screen-sm -translate-x-1/2 grid-cols-4 border-t border-slate-200 bg-white">
       {navItems.map((item) => (
         <NavLink
           key={item.to}

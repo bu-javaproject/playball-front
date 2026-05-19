@@ -181,7 +181,7 @@ function toParticipant(member: BackendJoinedMember): MatchParticipant {
     memberId: member.memberId,
     nickname: member.nickname,
     profileImage: member.profileImage,
-    status: 'JOINED',
+    status: 'APPROVED',
   };
 }
 

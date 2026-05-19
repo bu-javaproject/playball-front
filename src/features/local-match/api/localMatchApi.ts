@@ -198,7 +198,7 @@ export async function joinMatch(matchId: number, payload: MatchJoinRequest = {})
     matchTitle: '',
     matchDate: '',
     locationName: '',
-    status: 'JOINED',
+    status: 'APPROVED',
   };
 }
 

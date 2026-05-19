@@ -15,7 +15,7 @@ import {
   statusLabel,
 } from '../utils/matchFormat';
 
-export type MatchUserRelation = 'NONE' | 'CREATED' | 'JOINED';
+export type MatchUserRelation = 'NONE' | 'CREATED' | 'APPROVED';
 
 interface MatchBottomSheetProps {
   match: LocalMatch | null;
@@ -52,7 +52,7 @@ function getPreviousSnap(currentSnap: BottomSheetSnap) {
 function getJoinButtonLabel(match: LocalMatch, userRelation: MatchUserRelation, isJoining: boolean) {
   if (isJoining) return '참가 신청 중';
   if (userRelation === 'CREATED') return '내가 만든 경기';
-  if (userRelation === 'JOINED') return '참가 완료';
+  if (userRelation === 'APPROVED') return '참가 완료';
   if (match.status !== 'OPEN') return statusLabel[match.status];
   return '참가하기';
 }
@@ -77,7 +77,7 @@ export default function MatchBottomSheet({
 
   const canJoin = match.status === 'OPEN' && userRelation === 'NONE';
   const canCancelCreatedMatch = userRelation === 'CREATED' && match.status !== 'CANCELLED';
-  const canLeaveJoinedMatch = userRelation === 'JOINED' && match.status !== 'CANCELLED';
+  const canLeaveJoinedMatch = userRelation === 'APPROVED' && match.status !== 'CANCELLED';
 
   const handlePointerDown = (event: PointerEvent<HTMLElement>) => {
     dragStartYRef.current = event.clientY;

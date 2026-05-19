@@ -95,7 +95,7 @@ export async function acceptRandomMatch(matchId: number): Promise<RandomMatchAcc
     matchId: result.matchId ?? matchId,
     currentPlayers: result.currentPlayers,
     maxPlayers: result.maxPlayers,
-    status: result.status === 'APPROVED' ? 'APPROVED' : 'JOINED',
+    status: 'APPROVED',
   };
 }
 

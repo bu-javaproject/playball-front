@@ -4,10 +4,6 @@ export type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
 export type MatchStatus = 'OPEN' | 'CLOSED' | 'DELETED' | 'FULL' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
-export type TimeSlot = 'AM' | 'PM';
-
-export type FeeType = 'FREE' | 'UNDER_10000' | 'ANY';
-
 export interface LocalMatch {
   matchId: number;
   title: string;
@@ -44,10 +40,6 @@ export interface MapCenter {
 
 export interface LocalMatchFilters {
   sportType?: SportType;
-  date?: 'TODAY' | 'TOMORROW' | 'THIS_WEEK' | string;
-  timeSlot?: TimeSlot;
-  skillLevel?: SkillLevel;
-  feeType?: FeeType;
 }
 
 export interface LocalMatchSearchParams extends MapCenter, LocalMatchFilters {
@@ -85,5 +77,5 @@ export interface MatchJoinResult {
   matchTitle: string;
   matchDate: string;
   locationName: string;
-  status: 'PENDING' | 'JOINED';
+  status: 'APPROVED';
 }
