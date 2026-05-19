@@ -1,4 +1,4 @@
-export type SportType = 'SOCCER' | 'BASKETBALL' | 'RUNNING' | 'BADMINTON';
+﻿export type SportType = 'SOCCER' | 'BASKETBALL' | 'RUNNING' | 'BADMINTON';
 export type Gender = 'M' | 'F';
 export type RandomMatchStatus = 'FORM' | 'SEARCHING' | 'FOUND' | 'SUCCESS' | 'FAIL';
 export type RandomSkillLevel = 1 | 2 | 3 | 4 | 5;
@@ -6,6 +6,7 @@ export type RandomSkillLevel = 1 | 2 | 3 | 4 | 5;
 export interface RandomMatchRequest {
   latitude: number;
   longitude: number;
+  radius?: number;
   address: string;
   date: string;
   sportType: SportType;

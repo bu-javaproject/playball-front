@@ -1,7 +1,7 @@
-import type { Gender, SkillLevel } from '@/features/members/types/member';
+﻿import type { Gender, SkillLevel } from '@/features/members/types/member';
 
 export type SportType = 'SOCCER' | 'BASKETBALL' | 'RUNNING' | 'BADMINTON';
-export type MatchStatus = 'OPEN' | 'FULL' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'CLOSED';
+export type MatchStatus = 'OPEN' | 'CLOSED' | 'DELETED' | 'FULL' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 export type MyMatchRole = 'CREATOR' | 'PARTICIPANT';
 export type ParticipantStatus = 'JOINED' | 'PENDING';
 export type ComplimentTag = 'MANNERS' | 'SKILL' | 'PUNCTUAL' | 'PASSIONATE' | 'MOOD_MAKER';

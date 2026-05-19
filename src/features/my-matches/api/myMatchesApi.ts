@@ -14,13 +14,12 @@ import type {
   ComplimentBulkRequest,
   ComplimentBulkResult,
   MatchDetail,
-  MatchDetailParticipant,
   MatchHistoryResponse,
+  MatchParticipant,
   MatchParticipantsResponse,
   MatchStatus,
   MyMatchRole,
   MyMatchesResponse,
-  MyMatchSummary,
   PublicMemberProfile,
 } from '../types/myMatch';
 
@@ -38,117 +37,244 @@ export interface MyMatchHistoryParams {
   size?: number;
 }
 
-interface BackendMatchSummary {
-  matchId: number;
+type BackendMatchStatus = 'OPEN' | 'CLOSED' | 'DELETED' | string;
+
+type BackendJoinedMember = {
+  memberId: number;
+  nickname: string;
+  profileImage: string | null;
+  gender?: PublicMemberProfile['gender'];
+  age?: number;
+  skillLevel?: PublicMemberProfile['skillLevel'];
+  preferredPosition?: string | null;
+};
+
+type BackendMatch = {
+  id?: number;
+  matchId?: number;
   title: string;
-  sportType: MyMatchSummary['sportType'];
+  sportType: MatchDetail['sportType'];
   matchDate: string;
-  locationName: string;
+  locationName?: string | null;
+  latitude?: number;
+  longitude?: number;
+  address?: string | null;
   maxPlayers: number;
   currentPlayers: number;
-  status: MatchStatus;
+  gender?: PublicMemberProfile['gender'] | null;
+  ageRange?: number | null;
+  skillLevel?: PublicMemberProfile['skillLevel'] | null;
+  entryFee?: number | null;
+  description?: string | null;
+  status: BackendMatchStatus;
+  createdAt?: string;
+  updatedAt?: string;
+  creatorId?: number;
+  hostId?: number;
+  creatorNickname?: string;
+  hostNickname?: string;
+};
+
+type BackendMatchDetailResponse =
+  | BackendMatch
+  | {
+      match: BackendMatch;
+      joinedMembers?: BackendJoinedMember[];
+    };
+
+type BackendMyMatchesResponse =
+  | BackendMatch[]
+  | {
+      content?: BackendMatch[];
+      totalElements?: number;
+      hasNext?: boolean;
+    };
+
+function normalizeStatus(status: BackendMatchStatus): MatchStatus {
+  if (status === 'OPEN') return 'OPEN';
+  if (status === 'CLOSED') return 'CLOSED';
+  if (status === 'DELETED') return 'DELETED';
+  if (status === 'FULL') return 'CLOSED';
+  if (status === 'CANCELLED') return 'DELETED';
+  if (status === 'COMPLETED') return 'COMPLETED';
+  return 'OPEN';
 }
 
-interface BackendMatchDetail {
-  match: Omit<MatchDetail, 'creatorId' | 'creatorNickname' | 'participants'> & {
-    gender?: string;
-    ageRange?: number;
-  };
-  joinedMembers: Array<MatchDetailParticipant & {
-    gender?: string;
-    age?: number;
-    skillLevel?: string;
-    preferredPosition?: string;
-  }>;
+function getMatchId(match: BackendMatch) {
+  return match.matchId ?? match.id ?? 0;
 }
 
-function toPagedMatches(matches: BackendMatchSummary[]): MyMatchesResponse {
+function getBackendMyMatches(data: BackendMyMatchesResponse) {
+  if (Array.isArray(data)) {
+    return {
+      content: data,
+      totalElements: data.length,
+      hasNext: false,
+    };
+  }
+
   return {
-    content: matches.map((match) => ({
-      ...match,
-      isCreator: false,
-      playerPreview: [],
-    })),
-    totalElements: matches.length,
-    hasNext: false,
+    content: data.content ?? [],
+    totalElements: data.totalElements ?? data.content?.length ?? 0,
+    hasNext: data.hasNext ?? false,
   };
 }
 
-function toMatchDetail(response: BackendMatchDetail): MatchDetail {
+function getBackendDetail(data: BackendMatchDetailResponse) {
+  if ('match' in data) {
+    return {
+      match: data.match,
+      joinedMembers: data.joinedMembers ?? [],
+    };
+  }
+
+  return { match: data, joinedMembers: [] };
+}
+
+function toSummary(match: BackendMatch) {
   return {
-    ...response.match,
-    creatorId: 0,
-    creatorNickname: '주최자',
-    participants: response.joinedMembers,
+    matchId: getMatchId(match),
+    title: match.title,
+    sportType: match.sportType,
+    matchDate: match.matchDate,
+    locationName: match.locationName ?? match.address ?? '장소 미정',
+    maxPlayers: match.maxPlayers,
+    currentPlayers: match.currentPlayers,
+    status: normalizeStatus(match.status),
+    isCreator: false,
+    rating: 0,
+    playerPreview: [],
   };
 }
 
-function toParticipants(response: BackendMatchDetail): MatchParticipantsResponse {
+function toDetail(match: BackendMatch, joinedMembers: BackendJoinedMember[] = []): MatchDetail {
   return {
-    matchId: response.match.matchId,
-    title: response.match.title,
-    matchDate: response.match.matchDate,
-    maxPlayers: response.match.maxPlayers,
-    currentPlayers: response.match.currentPlayers,
-    participants: response.joinedMembers.map((member, index) => ({
-      participantId: member.memberId ?? index,
+    matchId: getMatchId(match),
+    creatorId: match.creatorId ?? match.hostId ?? 0,
+    creatorNickname: match.creatorNickname ?? match.hostNickname ?? '주최자',
+    title: match.title,
+    sportType: match.sportType,
+    matchDate: match.matchDate,
+    locationName: match.locationName ?? match.address ?? '장소 미정',
+    latitude: match.latitude ?? 0,
+    longitude: match.longitude ?? 0,
+    address: match.address ?? undefined,
+    maxPlayers: match.maxPlayers,
+    currentPlayers: match.currentPlayers,
+    skillLevel: match.skillLevel ?? undefined,
+    entryFee: match.entryFee ?? 0,
+    description: match.description ?? undefined,
+    status: normalizeStatus(match.status),
+    participants: joinedMembers.map((member) => ({
       memberId: member.memberId,
       nickname: member.nickname,
       profileImage: member.profileImage,
-      status: 'JOINED',
     })),
-    waitingList: [],
+    rating: 0,
+    createdAt: match.createdAt,
   };
 }
 
-export function getMyMatches(_params: MyMatchesParams = {}) {
+function toParticipant(member: BackendJoinedMember): MatchParticipant {
+  return {
+    participantId: member.memberId,
+    memberId: member.memberId,
+    nickname: member.nickname,
+    profileImage: member.profileImage,
+    status: 'JOINED',
+  };
+}
+
+async function fetchMyMatchesFromApi() {
+  const data = await unwrapApiResponse<BackendMyMatchesResponse>(apiClient.get('/api/members/me/matches'));
+  return getBackendMyMatches(data);
+}
+
+async function fetchMatchDetailFromApi(matchId: number) {
+  const data = await unwrapApiResponse<BackendMatchDetailResponse>(apiClient.get(`/api/matches/${matchId}`));
+  return getBackendDetail(data);
+}
+
+function isPastMatch(match: BackendMatch) {
+  const time = new Date(match.matchDate).getTime();
+  return Number.isNaN(time) ? false : time < Date.now();
+}
+
+export async function getMyMatches(params: MyMatchesParams = {}): Promise<MyMatchesResponse> {
+  void params;
+
   if (shouldUseMyMatchesMock) {
     return getMockMyMatches();
   }
 
-  return unwrapApiResponse<BackendMatchSummary[]>(apiClient.get('/api/members/me/matches')).then(toPagedMatches);
+  const data = await fetchMyMatchesFromApi();
+  const content = data.content
+    .map(toSummary)
+    .filter((match) => match.status !== 'DELETED')
+    .filter((match) => !isPastMatch(match));
+
+  return {
+    content,
+    totalElements: content.length,
+    hasNext: false,
+  };
 }
 
-export function getMyMatchHistory(_params: MyMatchHistoryParams = {}) {
+export async function getMyMatchHistory(params: MyMatchHistoryParams = {}): Promise<MatchHistoryResponse> {
+  void params;
+
   if (shouldUseMyMatchesMock) {
     return getMockMatchHistory();
   }
 
-  return unwrapApiResponse<BackendMatchSummary[]>(apiClient.get('/api/members/me/matches')).then((matches) => {
-    const finishedMatches = matches.filter((match) => ['COMPLETED', 'CANCELLED', 'CLOSED'].includes(match.status));
+  const data = await fetchMyMatchesFromApi();
+  const content = data.content
+    .filter((match) => normalizeStatus(match.status) !== 'DELETED')
+    .filter(isPastMatch)
+    .map((match) => ({
+      matchId: getMatchId(match),
+      title: match.title,
+      sportType: match.sportType,
+      matchDate: match.matchDate,
+      locationName: match.locationName ?? match.address ?? '장소 미정',
+      result: normalizeStatus(match.status),
+      myRole: 'PLAYER' as const,
+      rated: false,
+    }));
 
-    return {
-      content: finishedMatches.map((match) => ({
-        matchId: match.matchId,
-        title: match.title,
-        sportType: match.sportType,
-        matchDate: match.matchDate,
-        locationName: match.locationName,
-        result: match.status,
-        myRole: 'PLAYER',
-        rated: false,
-      })),
-      totalElements: finishedMatches.length,
-      totalPages: 1,
-      hasNext: false,
-    } satisfies MatchHistoryResponse;
-  });
+  return {
+    content,
+    totalElements: content.length,
+    totalPages: 1,
+    hasNext: false,
+  };
 }
 
-export function getMatchParticipants(matchId: number) {
+export async function getMatchParticipants(matchId: number): Promise<MatchParticipantsResponse> {
   if (shouldUseMyMatchesMock) {
     return getMockMatchParticipants(matchId);
   }
 
-  return unwrapApiResponse<BackendMatchDetail>(apiClient.get(`/api/matches/${matchId}`)).then(toParticipants);
+  const detail = await fetchMatchDetailFromApi(matchId);
+
+  return {
+    matchId: getMatchId(detail.match),
+    title: detail.match.title,
+    matchDate: detail.match.matchDate,
+    maxPlayers: detail.match.maxPlayers,
+    currentPlayers: detail.match.currentPlayers,
+    participants: detail.joinedMembers.map(toParticipant),
+    waitingList: [],
+  };
 }
 
-export function getMatchDetail(matchId: number) {
+export async function getMatchDetail(matchId: number): Promise<MatchDetail> {
   if (shouldUseMyMatchesMock) {
     return getMockMatchDetail(matchId);
   }
 
-  return unwrapApiResponse<BackendMatchDetail>(apiClient.get(`/api/matches/${matchId}`)).then(toMatchDetail);
+  const detail = await fetchMatchDetailFromApi(matchId);
+  return toDetail(detail.match, detail.joinedMembers);
 }
 
 export function getMemberProfile(memberId: number) {

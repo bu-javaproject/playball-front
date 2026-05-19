@@ -8,7 +8,6 @@ import { MyMatchCard } from '../components/MyMatchCard';
 import { ParticipantSheet } from '../components/ParticipantSheet';
 import { PastMatchItem } from '../components/PastMatchItem';
 import { PlayerProfileModal } from '../components/PlayerProfileModal';
-import { PraiseModal } from '../components/PraiseModal';
 import { useCreateCompliment } from '../hooks/useCreateCompliment';
 import { useLeaveOrCancelMatch } from '../hooks/useLeaveOrCancelMatch';
 import { useMatchDetail } from '../hooks/useMatchDetail';
@@ -27,7 +26,7 @@ export function MyMatchesFeaturePage() {
   const [selectedMatchStatus, setSelectedMatchStatus] = useState<MatchStatus | null>(null);
   const [selectedParticipant, setSelectedParticipant] = useState<MatchParticipant | null>(null);
   const [pendingLeaveAction, setPendingLeaveAction] = useState<MyMatchSummary | null>(null);
-  const [isPraiseOpen, setIsPraiseOpen] = useState(false);
+  const [praisedParticipantKeys, setPraisedParticipantKeys] = useState<Set<string>>(() => new Set());
   const participantsQuery = useMatchParticipants(selectedMatchId);
   const matchDetailQuery = useMatchDetail(selectedDetailMatchId);
   const memberProfileQuery = useMemberProfile(selectedParticipant?.memberId ?? null);
@@ -36,6 +35,8 @@ export function MyMatchesFeaturePage() {
   const upcomingMatches = useMemo(() => myMatchesQuery.data?.content ?? [], [myMatchesQuery.data?.content]);
   const pastMatches = useMemo(() => historyQuery.data?.content ?? [], [historyQuery.data?.content]);
   const canPraise = selectedMatchStatus ? isFinishedStatus(selectedMatchStatus) : false;
+  const selectedParticipantPraiseKey = selectedMatchId && selectedParticipant ? getPraiseKey(selectedMatchId, selectedParticipant.memberId) : null;
+  const isSelectedParticipantPraised = selectedParticipantPraiseKey ? praisedParticipantKeys.has(selectedParticipantPraiseKey) : false;
 
   const selectedHistoryStatus = useMemo(
     () => pastMatches.find((match) => match.matchId === selectedMatchId)?.result ?? null,
@@ -51,7 +52,6 @@ export function MyMatchesFeaturePage() {
     setSelectedMatchId(null);
     setSelectedMatchStatus(null);
     setSelectedParticipant(null);
-    setIsPraiseOpen(false);
   }
 
   function confirmLeaveOrCancel() {
@@ -67,23 +67,24 @@ export function MyMatchesFeaturePage() {
     );
   }
 
-  function submitPraise(tags: ComplimentTag[], comment: string) {
-    if (!selectedParticipant) return;
+  function submitPraise(tag: ComplimentTag) {
+    if (!selectedParticipant || !selectedParticipantPraiseKey || isSelectedParticipantPraised) {
+      return;
+    }
 
     complimentMutation.mutate(
       {
         compliments: [
           {
             rateeId: selectedParticipant.memberId,
-            tags,
-            comment: comment.trim() ? comment.trim() : null,
+            tags: [tag],
+            comment: null,
           },
         ],
       },
       {
         onSuccess: () => {
-          setIsPraiseOpen(false);
-          setSelectedParticipant(null);
+          setPraisedParticipantKeys((current) => new Set(current).add(selectedParticipantPraiseKey));
         },
       },
     );
@@ -148,6 +149,7 @@ export function MyMatchesFeaturePage() {
         <ParticipantSheet
           match={participantsQuery.data}
           isLoading={participantsQuery.isLoading}
+          praisedMemberIds={getPraisedMemberIds(selectedMatchId, praisedParticipantKeys)}
           onClose={closeParticipants}
           onOpenProfile={setSelectedParticipant}
         />
@@ -158,17 +160,10 @@ export function MyMatchesFeaturePage() {
           profile={memberProfileQuery.data}
           isLoading={memberProfileQuery.isLoading}
           canPraise={canPraise}
+          isSubmittingPraise={complimentMutation.isPending}
+          isPraiseCompleted={isSelectedParticipantPraised}
           onClose={() => setSelectedParticipant(null)}
-          onPraise={() => setIsPraiseOpen(true)}
-        />
-      ) : null}
-
-      {selectedParticipant && isPraiseOpen ? (
-        <PraiseModal
-          participant={selectedParticipant}
-          isSubmitting={complimentMutation.isPending}
-          onClose={() => setIsPraiseOpen(false)}
-          onSubmit={submitPraise}
+          onPraiseSubmit={submitPraise}
         />
       ) : null}
 
@@ -182,6 +177,24 @@ export function MyMatchesFeaturePage() {
       ) : null}
     </div>
   );
+}
+
+function getPraiseKey(matchId: number, memberId: number) {
+  return `${matchId}:${memberId}`;
+}
+
+function getPraisedMemberIds(matchId: number, praisedKeys: Set<string>) {
+  const memberIds = new Set<number>();
+
+  praisedKeys.forEach((key) => {
+    const [keyMatchId, keyMemberId] = key.split(':').map(Number);
+
+    if (keyMatchId === matchId && Number.isFinite(keyMemberId)) {
+      memberIds.add(keyMemberId);
+    }
+  });
+
+  return memberIds;
 }
 
 function LoadingCard({ message }: { message: string }) {

@@ -18,12 +18,7 @@ export function PastMatchItem({ match, onOpenParticipants, onOpenDetail }: PastM
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-base font-black text-play-ink">{match.title}</h3>
-          <div className="mt-1 flex items-center gap-2 text-sm font-bold text-play-muted">
-            <span>{formatShortDate(match.matchDate)}</span>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-black ${match.rated ? 'bg-play-surface text-play-muted' : 'bg-amber-100 text-amber-600'}`}>
-              {match.rated ? '칭찬 완료' : '칭찬 가능'}
-            </span>
-          </div>
+          <p className="mt-1 text-sm font-bold text-play-muted">{formatShortDate(match.matchDate)}</p>
         </div>
       </div>
 

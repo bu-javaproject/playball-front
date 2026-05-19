@@ -16,11 +16,12 @@ export const sportIcon: Record<SportType, string> = {
 
 export const statusLabel: Record<MatchStatus, string> = {
   OPEN: '모집 중',
+  CLOSED: '마감',
+  DELETED: '삭제',
   FULL: '마감',
   IN_PROGRESS: '진행 중',
   COMPLETED: '완료',
   CANCELLED: '취소',
-  CLOSED: '종료',
 };
 
 export const complimentTagLabel: Record<ComplimentTag, string> = {
@@ -104,5 +105,5 @@ export function getInitial(name: string) {
 }
 
 export function isFinishedStatus(status: MatchStatus) {
-  return status === 'COMPLETED' || status === 'CLOSED';
+  return status === 'COMPLETED';
 }

@@ -18,6 +18,8 @@ export const skillLevelLabel: Record<SkillLevel, string> = {
 
 export const statusLabel: Record<MatchStatus, string> = {
   OPEN: '모집 중',
+  CLOSED: '정원 마감',
+  DELETED: '삭제됨',
   FULL: '정원 마감',
   IN_PROGRESS: '진행 중',
   COMPLETED: '완료',

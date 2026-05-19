@@ -2,7 +2,7 @@
 
 export type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
-export type MatchStatus = 'OPEN' | 'FULL' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type MatchStatus = 'OPEN' | 'CLOSED' | 'DELETED' | 'FULL' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 export type TimeSlot = 'AM' | 'PM';
 
