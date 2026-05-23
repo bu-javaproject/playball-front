@@ -9,6 +9,7 @@ const today = new Date().toISOString().slice(0, 10);
 const initialRandomMatchForm: RandomMatchRequest = {
   latitude: 36.8416,
   longitude: 127.1851,
+  radius: 5,
   address: '충청남도 천안시 동남구 안서동',
   date: today,
   sportType: 'SOCCER',
@@ -49,7 +50,7 @@ export function useRandomMatchFlow() {
       queryClient.invalidateQueries({ queryKey: ['my-matches'] });
       setStatus('SUCCESS');
     } catch {
-      window.alert('참가 신청에 실패했습니다.');
+      window.alert('참가 요청에 실패했습니다.');
     }
   };
 

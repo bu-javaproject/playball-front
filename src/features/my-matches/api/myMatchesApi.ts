@@ -37,7 +37,11 @@ export interface MyMatchHistoryParams {
   size?: number;
 }
 
-type BackendMatchStatus = 'OPEN' | 'CLOSED' | 'DELETED' | string;
+type BackendMatchStatus = 'OPEN' | 'CLOSED' | 'COMPLETED' | 'DELETED' | string;
+
+type BackendMyProfile = {
+  memberId: number;
+};
 
 type BackendJoinedMember = {
   memberId: number;
@@ -73,6 +77,7 @@ type BackendMatch = {
   hostId?: number;
   creatorNickname?: string;
   hostNickname?: string;
+  hostName?: string;
 };
 
 type BackendMatchDetailResponse =
@@ -93,15 +98,27 @@ type BackendMyMatchesResponse =
 function normalizeStatus(status: BackendMatchStatus): MatchStatus {
   if (status === 'OPEN') return 'OPEN';
   if (status === 'CLOSED') return 'CLOSED';
+  if (status === 'COMPLETED') return 'COMPLETED';
   if (status === 'DELETED') return 'DELETED';
   if (status === 'FULL') return 'CLOSED';
   if (status === 'CANCELLED') return 'DELETED';
-  if (status === 'COMPLETED') return 'COMPLETED';
   return 'OPEN';
 }
 
 function getMatchId(match: BackendMatch) {
   return match.matchId ?? match.id ?? 0;
+}
+
+function getCreatorId(match: BackendMatch) {
+  return match.hostId ?? match.creatorId ?? 0;
+}
+
+function getCreatorName(match: BackendMatch) {
+  return match.hostName ?? match.hostNickname ?? match.creatorNickname ?? '주최자';
+}
+
+function getLocationName(match: BackendMatch) {
+  return match.locationName ?? match.address ?? '장소 미정';
 }
 
 function getBackendMyMatches(data: BackendMyMatchesResponse) {
@@ -131,17 +148,21 @@ function getBackendDetail(data: BackendMatchDetailResponse) {
   return { match: data, joinedMembers: [] };
 }
 
-function toSummary(match: BackendMatch) {
+function isCreator(match: BackendMatch, myMemberId?: number) {
+  return Boolean(myMemberId && getCreatorId(match) === myMemberId);
+}
+
+function toSummary(match: BackendMatch, myMemberId?: number) {
   return {
     matchId: getMatchId(match),
     title: match.title,
     sportType: match.sportType,
     matchDate: match.matchDate,
-    locationName: match.locationName ?? match.address ?? '장소 미정',
+    locationName: getLocationName(match),
     maxPlayers: match.maxPlayers,
     currentPlayers: match.currentPlayers,
     status: normalizeStatus(match.status),
-    isCreator: false,
+    isCreator: isCreator(match, myMemberId),
     rating: 0,
     playerPreview: [],
   };
@@ -150,12 +171,12 @@ function toSummary(match: BackendMatch) {
 function toDetail(match: BackendMatch, joinedMembers: BackendJoinedMember[] = []): MatchDetail {
   return {
     matchId: getMatchId(match),
-    creatorId: match.creatorId ?? match.hostId ?? 0,
-    creatorNickname: match.creatorNickname ?? match.hostNickname ?? '주최자',
+    creatorId: getCreatorId(match),
+    creatorNickname: getCreatorName(match),
     title: match.title,
     sportType: match.sportType,
     matchDate: match.matchDate,
-    locationName: match.locationName ?? match.address ?? '장소 미정',
+    locationName: getLocationName(match),
     latitude: match.latitude ?? 0,
     longitude: match.longitude ?? 0,
     address: match.address ?? undefined,
@@ -185,6 +206,10 @@ function toParticipant(member: BackendJoinedMember): MatchParticipant {
   };
 }
 
+async function fetchMyProfileFromApi() {
+  return unwrapApiResponse<BackendMyProfile>(apiClient.get('/api/members/me'));
+}
+
 async function fetchMyMatchesFromApi() {
   const data = await unwrapApiResponse<BackendMyMatchesResponse>(apiClient.get('/api/members/me/matches'));
   return getBackendMyMatches(data);
@@ -195,7 +220,7 @@ async function fetchMatchDetailFromApi(matchId: number) {
   return getBackendDetail(data);
 }
 
-function isPastMatch(match: BackendMatch) {
+function isPastMatch(match: Pick<BackendMatch, 'matchDate'>) {
   const time = new Date(match.matchDate).getTime();
   return Number.isNaN(time) ? false : time < Date.now();
 }
@@ -207,11 +232,11 @@ export async function getMyMatches(params: MyMatchesParams = {}): Promise<MyMatc
     return getMockMyMatches();
   }
 
-  const data = await fetchMyMatchesFromApi();
+  const [data, profile] = await Promise.all([fetchMyMatchesFromApi(), fetchMyProfileFromApi()]);
   const content = data.content
-    .map(toSummary)
-    .filter((match) => match.status !== 'DELETED')
-    .filter((match) => !isPastMatch(match));
+    .filter((match) => normalizeStatus(match.status) !== 'DELETED')
+    .filter((match) => !isPastMatch(match))
+    .map((match) => toSummary(match, profile.memberId));
 
   return {
     content,
@@ -227,7 +252,7 @@ export async function getMyMatchHistory(params: MyMatchHistoryParams = {}): Prom
     return getMockMatchHistory();
   }
 
-  const data = await fetchMyMatchesFromApi();
+  const [data, profile] = await Promise.all([fetchMyMatchesFromApi(), fetchMyProfileFromApi()]);
   const content = data.content
     .filter((match) => normalizeStatus(match.status) !== 'DELETED')
     .filter(isPastMatch)
@@ -236,9 +261,9 @@ export async function getMyMatchHistory(params: MyMatchHistoryParams = {}): Prom
       title: match.title,
       sportType: match.sportType,
       matchDate: match.matchDate,
-      locationName: match.locationName ?? match.address ?? '장소 미정',
+      locationName: getLocationName(match),
       result: normalizeStatus(match.status),
-      myRole: 'PLAYER' as const,
+      myRole: isCreator(match, profile.memberId) ? ('CREATOR' as const) : ('PLAYER' as const),
       rated: false,
     }));
 

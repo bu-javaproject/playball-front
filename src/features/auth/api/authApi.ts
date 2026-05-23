@@ -3,7 +3,10 @@ import type { KakaoLoginRequest, KakaoLoginResult } from '../types/auth';
 
 export function loginWithKakao(payload: KakaoLoginRequest) {
   return unwrapApiResponse<KakaoLoginResult>(
-    apiClient.post('/api/auth/kakao', { authorizationCode: payload.authorizationCode }),
+    apiClient.post('/api/auth/kakao', {
+      authorizationCode: payload.authorizationCode,
+      redirectUri: payload.redirectUri,
+    }),
   );
 }
 

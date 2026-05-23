@@ -8,19 +8,11 @@ import { useRandomMatchFlow } from '@/features/random-match/hooks/useRandomMatch
 
 export default function RandomMatchPage() {
   const navigate = useNavigate();
-  const {
-    status,
-    form,
-    matchedGame,
-    updateForm,
-    requestMatch,
-    acceptMatch,
-    rejectMatch,
-    resetToForm,
-  } = useRandomMatchFlow();
+  const { status, form, matchedGame, updateForm, requestMatch, acceptMatch, rejectMatch, resetToForm } =
+    useRandomMatchFlow();
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-play-surface px-4 pb-6">
+    <div className="flex min-h-[calc(100vh-64px)] flex-col bg-play-surface px-4 pb-6">
       <AppHeader title="랜덤 매칭" subtitle="조건에 맞는 경기를 추천해드려요" showBack />
 
       {status === 'FORM' && <RandomMatchForm form={form} onChange={updateForm} onSubmit={requestMatch} />}
@@ -47,8 +39,8 @@ export default function RandomMatchPage() {
 
       {status === 'SUCCESS' && (
         <RandomMatchStatusCard
-          title="참가 신청 완료"
-          description="매칭된 경기에 참가 신청이 완료되었습니다."
+          title="참가 요청 완료"
+          description="매칭된 경기 참가 요청이 완료되었습니다."
           icon="완료"
         >
           <button
@@ -61,10 +53,10 @@ export default function RandomMatchPage() {
 
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/local-match')}
             className="mt-3 h-12 w-full rounded-xl bg-play-surface font-black text-play-muted"
           >
-            홈으로
+            지도 화면으로
           </button>
         </RandomMatchStatusCard>
       )}

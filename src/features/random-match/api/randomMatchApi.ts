@@ -99,6 +99,6 @@ export async function acceptRandomMatch(matchId: number): Promise<RandomMatchAcc
   };
 }
 
-export async function rejectRandomMatch(): Promise<null> {
-  return null;
+export function rejectRandomMatch(): Promise<null> {
+  return Promise.resolve(null);
 }
