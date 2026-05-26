@@ -10,6 +10,7 @@ interface LocalMatchMapProps {
   matches: LocalMatch[];
   selectedMatchId: number | null;
   focusCenter?: MapCenter | null;
+  currentLocation?: MapCenter | null;
   createLocation?: MapCenter | null;
   isPickingCreateLocation?: boolean;
   onSelectMatch: (matchId: number) => void;
@@ -37,10 +38,22 @@ function createPendingContent() {
   return content;
 }
 
+function createCurrentLocationContent() {
+  const content = document.createElement('div');
+  content.className = 'relative grid h-7 w-7 place-items-center rounded-full bg-[#060080]/15';
+
+  const dot = document.createElement('div');
+  dot.className = 'h-5 w-5 rounded-full border-[3px] border-white bg-[#060080] shadow-lg';
+  content.appendChild(dot);
+
+  return content;
+}
+
 export default function LocalMatchMap({
   matches,
   selectedMatchId,
   focusCenter,
+  currentLocation,
   createLocation,
   isPickingCreateLocation = false,
   onSelectMatch,
@@ -51,6 +64,7 @@ export default function LocalMatchMap({
   const mapRef = useRef<KakaoMap | null>(null);
   const markersRef = useRef<KakaoMarker[]>([]);
   const overlaysRef = useRef<KakaoOverlay[]>([]);
+  const currentLocationOverlayRef = useRef<KakaoOverlay | null>(null);
   const pendingMarkerRef = useRef<KakaoMarker | null>(null);
   const pendingOverlayRef = useRef<KakaoOverlay | null>(null);
   const hasFitInitialBoundsRef = useRef(false);
@@ -156,6 +170,27 @@ export default function LocalMatchMap({
       yAnchor: 2.9,
     });
   }, [createLocation, isLoaded]);
+
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) {
+      return;
+    }
+
+    currentLocationOverlayRef.current?.setMap(null);
+    currentLocationOverlayRef.current = null;
+
+    if (!currentLocation) {
+      return;
+    }
+
+    const position = new window.kakao.maps.LatLng(currentLocation.latitude, currentLocation.longitude);
+    currentLocationOverlayRef.current = new window.kakao.maps.CustomOverlay({
+      map: mapRef.current,
+      position,
+      content: createCurrentLocationContent(),
+      yAnchor: 0.5,
+    });
+  }, [currentLocation, isLoaded]);
 
   useEffect(() => {
     if (!focusCenter || !mapRef.current || !isLoaded) {

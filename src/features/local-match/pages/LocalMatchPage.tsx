@@ -270,6 +270,7 @@ export default function LocalMatchPage() {
         matches={matches}
         selectedMatchId={selectedMatchId}
         focusCenter={focusCenter ?? currentLocation}
+        currentLocation={currentLocation}
         createLocation={createLocation}
         isPickingCreateLocation={isPickingCreateLocation}
         onSelectMatch={handleSelectMatch}
