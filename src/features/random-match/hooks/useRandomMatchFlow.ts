@@ -1,6 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { useAuth } from '@/app/providers/AuthContext';
+
 import { acceptRandomMatch, rejectRandomMatch, requestRandomMatch } from '../api/randomMatchApi';
 import type { RandomMatchedGame, RandomMatchRequest, RandomMatchStatus } from '../types/randomMatch';
 
@@ -21,6 +23,7 @@ const initialRandomMatchForm: RandomMatchRequest = {
 };
 
 export function useRandomMatchFlow() {
+  const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<RandomMatchStatus>('FORM');
   const [matchedGame, setMatchedGame] = useState<RandomMatchedGame | null>(null);
@@ -31,6 +34,11 @@ export function useRandomMatchFlow() {
   };
 
   const requestMatch = async () => {
+    if (!isAuthenticated) {
+      window.alert('로그인 후 랜덤 매칭을 시작할 수 있습니다.');
+      return;
+    }
+
     setStatus('SEARCHING');
 
     try {
@@ -44,6 +52,11 @@ export function useRandomMatchFlow() {
 
   const acceptMatch = async () => {
     if (!matchedGame) return;
+
+    if (!isAuthenticated) {
+      window.alert('로그인 후 경기 참가를 신청할 수 있습니다.');
+      return;
+    }
 
     try {
       await acceptRandomMatch(matchedGame.matchId);

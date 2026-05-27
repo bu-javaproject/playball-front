@@ -1,5 +1,7 @@
 ﻿import { useCallback, useMemo, useState } from 'react';
 
+import { useAuth } from '@/app/providers/AuthContext';
+
 import { shouldUseLocalMatchMock } from '../api/localMatchApi';
 import ConfirmActionModal from '../components/ConfirmActionModal';
 import LocalMatchMap from '../components/LocalMatchMap';
@@ -28,6 +30,7 @@ const sportFilterOptions: Array<{ label: string; value: SportType | null }> = [
 ];
 
 export default function LocalMatchPage() {
+  const { isAuthenticated } = useAuth();
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
   const [isPickingCreateLocation, setIsPickingCreateLocation] = useState(false);
   const [createLocation, setCreateLocation] = useState<MapCenter | null>(null);
@@ -109,6 +112,11 @@ export default function LocalMatchPage() {
   }, [isPickingCreateLocation]);
 
   const handleStartCreateLocationPick = () => {
+    if (!isAuthenticated) {
+      window.alert('로그인 후 경기를 생성할 수 있습니다.');
+      return;
+    }
+
     setSelectedMatchId(null);
     setJoinedMatch(null);
     setCreateLocation(null);
@@ -158,6 +166,11 @@ export default function LocalMatchPage() {
   };
 
   const handleJoin = (matchId: number) => {
+    if (!isAuthenticated) {
+      window.alert('로그인 후 경기 참가를 신청할 수 있습니다.');
+      return;
+    }
+
     setPendingJoinMatchId(matchId);
   };
 
@@ -180,6 +193,11 @@ export default function LocalMatchPage() {
   };
 
   const handleLeaveJoinedMatch = (matchId: number) => {
+    if (!isAuthenticated) {
+      window.alert('로그인 후 참가 신청을 취소할 수 있습니다.');
+      return;
+    }
+
     setPendingLeaveMatchId(matchId);
   };
 
@@ -205,6 +223,11 @@ export default function LocalMatchPage() {
   };
 
   const handleCancelCreatedMatch = (matchId: number) => {
+    if (!isAuthenticated) {
+      window.alert('로그인 후 경기를 취소할 수 있습니다.');
+      return;
+    }
+
     setPendingCancelMatchId(matchId);
   };
 

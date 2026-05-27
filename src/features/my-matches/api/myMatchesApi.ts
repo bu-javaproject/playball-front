@@ -23,7 +23,7 @@ import type {
   PublicMemberProfile,
 } from '../types/myMatch';
 
-export const shouldUseMyMatchesMock = import.meta.env.VITE_USE_MOCK_MY_MATCHES !== 'false';
+export const shouldUseMyMatchesMock = import.meta.env.VITE_USE_MOCK_MY_MATCHES === 'true';
 
 export interface MyMatchesParams {
   role?: MyMatchRole;

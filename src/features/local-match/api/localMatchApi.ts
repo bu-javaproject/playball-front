@@ -21,7 +21,7 @@ import type {
   SportType,
 } from '../types/match';
 
-export const shouldUseLocalMatchMock = import.meta.env.VITE_USE_MOCK_LOCAL_MATCH !== 'false';
+export const shouldUseLocalMatchMock = import.meta.env.VITE_USE_MOCK_LOCAL_MATCH === 'true';
 
 type BackendMatchStatus = 'OPEN' | 'CLOSED' | 'DELETED' | string;
 

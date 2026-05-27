@@ -1,13 +1,16 @@
 import { useMemo, useState } from 'react';
 import { Trophy } from 'lucide-react';
 
+import { useAuth } from '@/app/providers/AuthContext';
 import AppHeader from '@/components/AppHeader';
+import { getKakaoAuthorizeUrl } from '@/features/auth/utils/kakaoAuth';
 
 import { MatchDetailSheet } from '../components/MatchDetailSheet';
 import { MyMatchCard } from '../components/MyMatchCard';
 import { ParticipantSheet } from '../components/ParticipantSheet';
 import { PastMatchItem } from '../components/PastMatchItem';
 import { PlayerProfileModal } from '../components/PlayerProfileModal';
+import { shouldUseMyMatchesMock } from '../api/myMatchesApi';
 import { useCreateCompliment } from '../hooks/useCreateCompliment';
 import { useLeaveOrCancelMatch } from '../hooks/useLeaveOrCancelMatch';
 import { useMatchDetail } from '../hooks/useMatchDetail';
@@ -18,8 +21,10 @@ import type { ComplimentTag, MatchParticipant, MatchStatus, MyMatchSummary } fro
 import { isFinishedStatus } from '../utils/myMatchFormat';
 
 export function MyMatchesFeaturePage() {
-  const myMatchesQuery = useMyMatches({ page: 0, size: 20 });
-  const historyQuery = useMyMatchHistory({ page: 0, size: 20 });
+  const { isAuthenticated } = useAuth();
+  const canLoadMyMatches = isAuthenticated || shouldUseMyMatchesMock;
+  const myMatchesQuery = useMyMatches({ page: 0, size: 20 }, canLoadMyMatches);
+  const historyQuery = useMyMatchHistory({ page: 0, size: 20 }, canLoadMyMatches);
   const leaveOrCancelMutation = useLeaveOrCancelMatch();
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
   const [selectedDetailMatchId, setSelectedDetailMatchId] = useState<number | null>(null);
@@ -88,6 +93,10 @@ export function MyMatchesFeaturePage() {
         },
       },
     );
+  }
+
+  if (!canLoadMyMatches) {
+    return <MyMatchesLoginPrompt />;
   }
 
   return (
@@ -175,6 +184,36 @@ export function MyMatchesFeaturePage() {
           onConfirm={confirmLeaveOrCancel}
         />
       ) : null}
+    </div>
+  );
+}
+
+function MyMatchesLoginPrompt() {
+  const handleLogin = () => {
+    try {
+      window.location.href = getKakaoAuthorizeUrl();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : '카카오 로그인 설정을 확인해주세요.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-play-surface px-4 pb-8">
+      <AppHeader title="내 경기" subtitle="로그인 후 내가 참가한 경기를 확인할 수 있어요" />
+      <section className="mt-8 rounded-3xl border border-play-border bg-white px-5 py-10 text-center shadow-sm">
+        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-play-surface text-3xl">PB</div>
+        <h2 className="mt-6 text-2xl font-black text-play-ink">로그인이 필요합니다</h2>
+        <p className="mt-3 text-sm font-bold leading-6 text-play-muted">
+          내 경기 목록, 지난 경기, 참가자 정보는 로그인 후 확인할 수 있어요.
+        </p>
+        <button
+          type="button"
+          onClick={handleLogin}
+          className="mt-7 h-13 w-full rounded-2xl bg-[#FEE500] text-base font-black text-[#191919] shadow-lg shadow-yellow-200/60"
+        >
+          카카오로 시작하기
+        </button>
+      </section>
     </div>
   );
 }
